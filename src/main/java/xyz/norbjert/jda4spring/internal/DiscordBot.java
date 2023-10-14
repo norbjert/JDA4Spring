@@ -1,8 +1,8 @@
-package de.norbjert.jda4spring.internal;
+package xyz.norbjert.jda4spring.internal;
 
-import de.norbjert.jda4spring.annotations.AnnotationProcessor;
-import de.norbjert.jda4spring.annotations.OnChatMessage;
-import de.norbjert.jda4spring.annotations.SlashCommand;
+import xyz.norbjert.jda4spring.annotations.AnnotationProcessor;
+import xyz.norbjert.jda4spring.annotations.OnChatMessage;
+import xyz.norbjert.jda4spring.annotations.SlashCommand;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.JDA;
@@ -56,11 +56,20 @@ public class DiscordBot extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
 
-        logger.info("Received: /" + event.getName()
-                + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
-                + " in channel: " + event.getChannel().getName()
-                + " on server: " + Objects.requireNonNull(event.getGuild()).getName()
-                + " from user: " + event.getUser().getName());
+        if (event.getGuild() == null) {
+            logger.info("Received: /" + event.getName()
+                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
+                    + " in channel: " + event.getChannel().getName()
+                    + " via direct message"
+                    + " from user: " + event.getUser().getName());
+        } else {
+            logger.info("Received: /" + event.getName()
+                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
+                    + " in channel: " + event.getChannel().getName()
+                    + " on server: " + Objects.requireNonNull(event.getGuild()).getName()
+                    + " from user: " + event.getUser().getName());
+        }
+
 
         for (Method slashMethod : slashCommandMethods) {
 

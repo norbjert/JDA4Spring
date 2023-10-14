@@ -1,4 +1,4 @@
-package de.norbjert.jda4spring.internal;
+package xyz.norbjert.jda4spring.internal;
 
 import net.dv8tion.jda.api.JDA;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package de.norbjert.jda4spring.annotations;
+package xyz.norbjert.jda4spring.annotations;
 
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 

@@ -1,4 +1,4 @@
-package de.norbjert.jda4spring.annotations;
+package xyz.norbjert.jda4spring.annotations;
 
 import java.lang.annotation.*;
 

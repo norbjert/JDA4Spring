@@ -1,10 +1,11 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.0.0'
+    id 'java-library'
+    id 'org.springframework.boot' version '3.0.0' apply false
     id 'io.spring.dependency-management' version '1.1.0'
+    id 'maven-publish'
 }
 
-group = 'de.norbjert'
+group = 'xyz.norbjert'
 version = '0.0.1'
 sourceCompatibility = '17'
 
@@ -14,19 +15,51 @@ configurations {
     }
 }
 
+dependencyManagement {
+    imports {
+        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            groupId = 'xyz.norbjert'
+            artifactId = 'JDA4Spring'
+            version = '0.0.1'
+
+            // If you signed your artifacts, provide signing configuration here (Optional)
+            // signing {
+            //     sign publishing.publications.mavenJava
+            // }
+
+        }
+    }
+}
+
 repositories {
+    maven {
+        name = 'MavenCentral'
+        url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+        credentials {
+            username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+            password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+        }
+    }
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    //implementation 'org.springframework.boot:spring-boot-starter'
+    api 'org.springframework.boot:spring-boot-starter-web'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     //discord api
-    implementation 'net.dv8tion:JDA:5.0.0-beta.12'
+    implementation 'net.dv8tion:JDA:5.0.0-beta.15'
 }
 
 tasks.named('test') {

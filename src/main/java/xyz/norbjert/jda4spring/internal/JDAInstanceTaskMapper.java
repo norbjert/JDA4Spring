@@ -1,4 +1,4 @@
-package de.norbjert.jda4spring.internal;
+package xyz.norbjert.jda4spring.internal;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

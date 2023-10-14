@@ -1,7 +1,7 @@
-package de.norbjert.jda4spring.internal;
+package xyz.norbjert.jda4spring.internal;
 
-import de.norbjert.jda4spring.annotations.SlashCommand;
-import de.norbjert.jda4spring.annotations.SlashCommandArg;
+import xyz.norbjert.jda4spring.annotations.SlashCommand;
+import xyz.norbjert.jda4spring.annotations.SlashCommandArg;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.slf4j.Logger;
