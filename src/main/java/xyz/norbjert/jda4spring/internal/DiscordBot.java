@@ -28,13 +28,12 @@ import java.util.Objects;
 public class DiscordBot extends ListenerAdapter {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final JDA jda;
     private final List<Object> botTasks;
     private final List<Method> slashCommandMethods;
     private final List<Method> chatInteractionMethods;
 
     public DiscordBot(String apiToken, List<Object> botTasks, Activity activity, GatewayIntent... gatewayIntents) throws LoginException, InterruptedException {
-        this.jda = JDABuilder.createLight(apiToken, Arrays.asList(gatewayIntents))
+        JDA jda = JDABuilder.createLight(apiToken, Arrays.asList(gatewayIntents))
                 .addEventListeners(this)
                 .setActivity(activity)
                 .build()
@@ -74,7 +73,7 @@ public class DiscordBot extends ListenerAdapter {
         for (Method slashMethod : slashCommandMethods) {
 
                 //if the incoming slash command matches the command="xyz" variable of the @SlashCommand annotation
-            if (event.getName().equals(slashMethod.getAnnotation(SlashCommand.class).command())
+            if (event.getName().equalsIgnoreCase(slashMethod.getAnnotation(SlashCommand.class).command())
                     //if the incoming slash command matches the java method name, not recommended but works a secondary option for lazy ppl
                     || event.getName().equals(slashMethod.getName())) {
                 try {
@@ -130,7 +129,7 @@ public class DiscordBot extends ListenerAdapter {
         for (Method current : chatInteractionMethods) {
 
             //if "" -> gets called on every msg
-            if (current.getAnnotation(OnChatMessage.class).ifMsgContains().equals("")
+            if (current.getAnnotation(OnChatMessage.class).ifMsgContains().isEmpty()
                     //if msg contained the filter word
                     || event.getMessage().getContentRaw().contains(current.getAnnotation(OnChatMessage.class).ifMsgContains())) {
 
