@@ -81,4 +81,25 @@ public class AnnotationProcessor
         }
         return chatMsgAnnotations;
     }
+
+    public static List<Method> findButtonAnnotations(List<Object> botTasks) {
+
+        List<Method> buttonAnnotations = new ArrayList<>();
+
+        for (Object current : botTasks) {
+
+            for (Method method : current.getClass().getDeclaredMethods()) {
+
+                Button methodAnnotation = method.getAnnotation(Button.class);
+                if (methodAnnotation != null) {
+                    buttonAnnotations.add(method);
+                }
+                ButtonHandler methodAnnotation2 = method.getAnnotation(ButtonHandler.class);
+                if (methodAnnotation2 != null) {
+                    buttonAnnotations.add(method);
+                }
+            }
+        }
+        return buttonAnnotations;
+    }
 }

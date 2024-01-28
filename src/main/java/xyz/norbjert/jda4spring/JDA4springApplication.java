@@ -1,4 +1,4 @@
-/*package xyz.norbjert.jda4spring;
+package xyz.norbjert.jda4spring;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,4 +11,3 @@ public class JDA4springApplication {
     }
 
 }
-*/

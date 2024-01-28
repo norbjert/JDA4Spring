@@ -3,9 +3,11 @@ plugins {
     id 'org.springframework.boot' version '3.0.0' apply false
     id 'io.spring.dependency-management' version '1.1.0'
     id 'maven-publish'
+    id 'signing'
 }
 
 group = 'xyz.norbjert'
+archivesBaseName = "xyz.norbjert.jda4spring"
 version = '0.0.1'
 sourceCompatibility = '17'
 
@@ -15,29 +17,58 @@ configurations {
     }
 }
 
+
+tasks.register('javadocJar', Jar) {
+    dependsOn 'javadoc'
+    from javadoc.destinationDir
+    archiveClassifier.set('javadoc')
+}
+
+tasks.register('sourcesJar', Jar) {
+    dependsOn 'classes'
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+
 dependencyManagement {
     imports {
         mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
     }
 }
 
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
 
-            groupId = 'xyz.norbjert'
-            artifactId = 'JDA4Spring'
-            version = '0.0.1'
+            // Attach the custom pom.xml to the publication
+            pom {
+                withXml {
+                    asNode().appendNode('name', 'jda4spring')
+                    asNode().appendNode('description', 'A spring boot integration for the JDA Java Discord Api')
+                    asNode().appendNode('url', 'https://github.com/norbjert/JDA4Spring')
+                    asNode().appendNode('licenses').appendNode('license').appendNode('name', 'Apache-2.0')
+                            .appendNode('url', 'https://www.apache.org/licenses/LICENSE-2.0.html')
+                    // Add other metadata as needed
+                }
+                // Add other metadata as needed
+            }
 
-            // If you signed your artifacts, provide signing configuration here (Optional)
-            // signing {
-            //     sign publishing.publications.mavenJava
-            // }
+            // Attach additional artifacts
 
         }
     }
+    repositories {
+        // Configure your repository settings here
+    }
 }
+
 
 repositories {
     maven {
@@ -59,7 +90,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     //discord api
-    implementation 'net.dv8tion:JDA:5.0.0-beta.15'
+    implementation 'net.dv8tion:JDA:5.0.0-beta.20'
 }
 
 tasks.named('test') {
