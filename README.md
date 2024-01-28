@@ -3,6 +3,70 @@
 an integration of the JDA discord API (https://github.com/discord-jda/JDA) for spring boot, with various quality of life improvements.
 This project is still in active development, sufficiant documentation and ussage instructions will be added soon.
 
+Both this project and this readme are still actively being worked on, but heres a simple getting started for now:
+
+Step 0: create a spring boot project if you havent already
+
+Step 1: add the following to your build.gradle, to import the library:
+
+implementation 'net.dv8tion:JDA:5.0.0-beta.20'
+implementation 'xyz.norbjert:jda4spring:0.0.1'
+
+Step 2: add the configuration with your discord bot api key, etc... either in the application.properties or (perferably)
+in a seperate file, and set the config file location in the application.properties, for example:
+jda4spring.configFileLocation = src/main/resources/jda4spring.config
+for the contents of that config file, look into the example I provided in this repository
+
+Step 3: add a new class with the @BotTask("someUniqueName") annotation. Make sure "someUniqueName" matches
+with the Tasks you have specified in your jda4spring.config file
+
+Step 4: create a method with @OnChatMessage if you want it to respond to or process chat messages, or @SlashCommand
+if you want to add slash commands to your bot. Heres a little example:
+
+
+`@BotTask("ExampleBot")
+public class ExampleBot {
+
+    @SlashCommand(command = "ping", description = "Calculate ping of the bot")
+    public void ping(SlashCommandInteractionEvent event) {
+        //the contents of this method are from JDA's official example
+        long time = System.currentTimeMillis();
+        event.reply("Pong!").setEphemeral(true) // reply or acknowledge
+                .flatMap(v ->
+                        event.getHook().editOriginalFormat("Pong: %d ms", System.currentTimeMillis() - time) // then edit original
+                ).queue(); // Queue both reply and edit
+    }
+    
+    @OnChatMessage(ifMsgContains = "hello") //will only call method if the received message contained "hello"
+    public void hello(MessageReceivedEvent event){
+        event.getChannel().sendMessage("Hi there!").queue();
+    }
+    
+    @OnChatMessage //will be called on any chat message the bot receives
+    public void onAllChatMessages(MessageReceivedEvent event){
+        System.out.println(event.getAuthor().getName() + " has sent: " + event.getMessage().getContentRaw());
+    }
+}`
+
+
+Step 5: Thats it! Thats all you need, enjoy your new discord bot!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(anything below this are personal notes regarding to this project)
 
 
 
