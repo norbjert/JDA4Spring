@@ -3,14 +3,17 @@
 an integration of the JDA discord API (https://github.com/discord-jda/JDA) for spring boot, with various quality of life improvements.
 This project is still in active development, sufficient documentation and usage instructions will be added soon.
 
+
 Both this project and this readme are still actively being worked on, but here's a simple getting started for now:
+
 
 Step 0: create a spring boot project if you haven't already
 
 Step 1: add the following to your build.gradle, to import the library:
 
-`implementation 'net.dv8tion:JDA:5.0.0-beta.20'
-implementation 'xyz.norbjert:jda4spring:0.0.1'`
+`implementation 'net.dv8tion:JDA:5.0.0-beta.20'`
+
+`implementation 'xyz.norbjert:jda4spring:0.0.1'`
 
 Step 2: add the configuration with your discord bot api key, etc... either in the application.properties or (perferably)
 in a separate file, and set the config file location in the application.properties, for example:
