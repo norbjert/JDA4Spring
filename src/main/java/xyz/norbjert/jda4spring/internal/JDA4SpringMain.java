@@ -39,7 +39,7 @@ public class JDA4SpringMain {
 
 
         try {
-            List<BotConfigDataMapper> botConfigData = getBotConfigData().stream().filter(t -> t.type().equals("token")).toList();
+            List<BotConfigDataMapper> botConfigData = getBotConfigData().stream().filter(t -> t.type().contains("token")).toList();
             for (BotConfigDataMapper dataEntry : botConfigData) {
 
                 //basically a list with all entries for a bot with the name {BOTNAME}, so f.e. bots.{BOTNAME}.token = xyz
@@ -47,17 +47,17 @@ public class JDA4SpringMain {
                         .stream().filter(t -> t.name().equals(dataEntry.name())).toList();
 
                 String apiToken =
-                        allEntriesForThisBot.stream().filter(t -> t.type().equals("token")).toList().get(0).value()
+                        allEntriesForThisBot.stream().filter(t -> t.type().contains("token")).toList().get(0).value()
                                 .replace(" ", "");
                 List<Object> botTasks =
                         getEventListenersForBotAsBotTasks(
-                                allEntriesForThisBot.stream().filter(t -> t.type().equals("tasks")).toList().get(0).value());
+                                allEntriesForThisBot.stream().filter(t -> t.type().contains("tasks")).toList().get(0).value());
                 Activity activity =
                         getActivity(
                                 allEntriesForThisBot.stream().filter(t -> t.type().contains("activity")).toList().get(0));
                 List<GatewayIntent> gatewayIntents =
                         getGatewayIntents(
-                                allEntriesForThisBot.stream().filter(t -> t.type().equals("intents")).toList().get(0).value());
+                                allEntriesForThisBot.stream().filter(t -> t.type().contains("intents")).toList().get(0).value());
 
                 DiscordBot newDiscordBotAccountInstance = new DiscordBot(apiToken, botTasks, activity, gatewayIntents);
                 bots.add(newDiscordBotAccountInstance);
@@ -83,10 +83,15 @@ public class JDA4SpringMain {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (line.startsWith("bots.")) {
+                    String name = line.split("\\.")[1];
+                    String type = line.split("=")[0].replace(" ","");
+                    String value = line.split("=")[1];
                     re.add(new BotConfigDataMapper(
-                            line.split("\\.")[1],
-                            line.split("\\.")[2].split("=")[0].replace(" ", ""),
-                            line.split("=")[1]));
+                            name,
+                            type,
+                            value)
+                    );
+                    //System.out.println(new BotConfigDataMapper(name, type, value));
                 }
             }
         } catch (FileNotFoundException e) {
