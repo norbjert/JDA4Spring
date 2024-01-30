@@ -1,24 +1,26 @@
 package xyz.norbjert.jda4spring.internal;
 
 import lombok.Getter;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import xyz.norbjert.jda4spring.annotations.*;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.norbjert.jda4spring.annotations.Button;
+import xyz.norbjert.jda4spring.annotations.ButtonHandler;
+import xyz.norbjert.jda4spring.annotations.OnChatMessage;
+import xyz.norbjert.jda4spring.annotations.SlashCommand;
 
 import javax.security.auth.login.LoginException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,21 +38,6 @@ public class DiscordBot extends ListenerAdapter {
     private final List<Method> chatInteractionMethods;
     private final List<Method> buttonInteractionMethods;
 
-    public DiscordBot(String apiToken, List<Object> botTasks, Activity activity, GatewayIntent... gatewayIntents) throws LoginException, InterruptedException {
-        jda = JDABuilder.createLight(apiToken, Arrays.asList(gatewayIntents))
-                .addEventListeners(this)
-                .setActivity(activity)
-                .build()
-                .awaitReady();
-
-        this.botTasks = botTasks;
-        this.chatInteractionMethods = AnnotationProcessor.findChatMsgAnnotations(botTasks);
-        this.slashCommandMethods = AnnotationProcessor.findSlashCommands(botTasks);
-        this.buttonInteractionMethods = AnnotationProcessor.findButtonAnnotations(botTasks);
-
-        //publishes the slash commands to discord, so they show up in the preview for when you start typing /xyz
-        jda.updateCommands().addCommands(slashCommandMethods.stream().map(SlashCommandDataFactory::createSlashCommand).toList()).queue();
-    }
 
     public DiscordBot(String apiToken, List<Object> botTasks, Activity activity, List<GatewayIntent> gatewayIntents) throws LoginException, InterruptedException {
         jda = JDABuilder.createLight(apiToken, gatewayIntents)
@@ -173,7 +160,6 @@ public class DiscordBot extends ListenerAdapter {
             switch (annotatedMethod.getParameterCount()) {
                 case 0 -> annotatedMethod.invoke(declaringClass);
                 case 1 -> {
-                    //System.out.println(annotatedMethod.getParameterTypes()[0]);
                     if (annotatedMethod.getParameterTypes()[0].getTypeName().contains("MessageReceivedEvent")) {
                         annotatedMethod.invoke(declaringClass, event);
                     } else {
@@ -199,9 +185,6 @@ public class DiscordBot extends ListenerAdapter {
         System.out.println("eventID:"+event.getComponentId());
 
         for (Method current : buttonInteractionMethods) {
-
-            System.out.println("buttonhandler:"+current.getAnnotation(ButtonHandler.class));
-            System.out.println("button:"+current.getAnnotation(Button.class));
 
             //ButtonHandler -> gets called on every button interaction
             if (current.getAnnotation(ButtonHandler.class) != null
