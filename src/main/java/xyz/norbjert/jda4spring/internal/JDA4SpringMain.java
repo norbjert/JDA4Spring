@@ -39,25 +39,25 @@ public class JDA4SpringMain {
 
 
         try {
-            List<BotConfigDataMapper> botConfigData = getBotConfigData().stream().filter(t -> t.getType().equals("token")).toList();
+            List<BotConfigDataMapper> botConfigData = getBotConfigData().stream().filter(t -> t.type().equals("token")).toList();
             for (BotConfigDataMapper dataEntry : botConfigData) {
 
                 //basically a list with all entries for a bot with the name {BOTNAME}, so f.e. bots.{BOTNAME}.token = xyz
                 List<BotConfigDataMapper> allEntriesForThisBot = getBotConfigData()
-                        .stream().filter(t -> t.getName().equals(dataEntry.getName())).toList();
+                        .stream().filter(t -> t.name().equals(dataEntry.name())).toList();
 
                 String apiToken =
-                        allEntriesForThisBot.stream().filter(t -> t.getType().equals("token")).toList().get(0).getValue()
+                        allEntriesForThisBot.stream().filter(t -> t.type().equals("token")).toList().get(0).value()
                                 .replace(" ", "");
                 List<Object> botTasks =
                         getEventListenersForBotAsBotTasks(
-                                allEntriesForThisBot.stream().filter(t -> t.getType().equals("tasks")).toList().get(0).getValue());
+                                allEntriesForThisBot.stream().filter(t -> t.type().equals("tasks")).toList().get(0).value());
                 Activity activity =
                         getActivity(
-                                allEntriesForThisBot.stream().filter(t -> t.getType().contains("activity")).toList().get(0));
+                                allEntriesForThisBot.stream().filter(t -> t.type().contains("activity")).toList().get(0));
                 List<GatewayIntent> gatewayIntents =
                         getGatewayIntents(
-                                allEntriesForThisBot.stream().filter(t -> t.getType().equals("intents")).toList().get(0).getValue());
+                                allEntriesForThisBot.stream().filter(t -> t.type().equals("intents")).toList().get(0).value());
 
                 DiscordBot newDiscordBotAccountInstance = new DiscordBot(apiToken, botTasks, activity, gatewayIntents);
                 bots.add(newDiscordBotAccountInstance);
@@ -124,18 +124,18 @@ public class JDA4SpringMain {
     //returns the JDA Activity that got configured in the .config file
     private Activity getActivity(BotConfigDataMapper activity) {
 
-        if (activity.getType().endsWith("playing")) {
-            return Activity.playing(activity.getValue());
-        } else if (activity.getType().endsWith("listening")) {
-            return Activity.listening(activity.getValue());
-        } else if (activity.getType().endsWith("watching")) {
-            return Activity.watching(activity.getValue());
-        } else if (activity.getType().endsWith("competing")) {
-            return Activity.competing(activity.getValue());
-        } else if (activity.getType().endsWith("activity")) {
-            return Activity.customStatus(activity.getValue());
+        if (activity.type().endsWith("playing")) {
+            return Activity.playing(activity.value());
+        } else if (activity.type().endsWith("listening")) {
+            return Activity.listening(activity.value());
+        } else if (activity.type().endsWith("watching")) {
+            return Activity.watching(activity.value());
+        } else if (activity.type().endsWith("competing")) {
+            return Activity.competing(activity.value());
+        } else if (activity.type().endsWith("activity")) {
+            return Activity.customStatus(activity.value());
         } else {
-            logger.warn("no activity set for:" + activity.getName());
+            logger.warn("no activity set for:" + activity.name());
             return Activity.customStatus("");
         }
     }
@@ -145,7 +145,9 @@ public class JDA4SpringMain {
     ///////////////            Instance Stuff that can be used at runtime           /////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    @Getter
     private final List<DiscordBot> bots = new ArrayList<>(); //maybe make this statically available?
+    @Getter
     private final Map<String, Object> botTaskBeans; //maybe make this statically available?
     @Getter
     private static JDA4SpringMain instance;

@@ -1,7 +1,11 @@
-package xyz.norbjert.jda4spring.annotations;
+package xyz.norbjert.jda4spring.internal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.norbjert.jda4spring.annotations.Button;
+import xyz.norbjert.jda4spring.annotations.ButtonHandler;
+import xyz.norbjert.jda4spring.annotations.OnChatMessage;
+import xyz.norbjert.jda4spring.annotations.SlashCommand;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -17,6 +21,14 @@ public class AnnotationProcessor
 
 
     private static final Logger logger = LoggerFactory.getLogger(AnnotationProcessor.class);
+
+    /**
+     * static class, don't instantiate it pls thank you
+     */
+    private AnnotationProcessor(){
+        logger.error("static class, not to be instanced");
+        throw new RuntimeException("AnnotationProcessor is a static class and cannot be instanced");
+    }
 
     //private static final List<Method> slashMethods = new ArrayList<>();
 
@@ -48,7 +60,13 @@ public class AnnotationProcessor
                 .toList();
     }
 */
-    public static List<Method> findSlashCommands(List<Object> botTasks) {
+
+    /**
+     * internal helper method for initialisation of the DiscordBot instance
+     * @param botTasks the tasks that are to be scanned for @SlashCommand Annotation
+     * @return a list with all methods that have the @SlashCommand Annotation
+     */
+    static List<Method> findSlashCommands(List<Object> botTasks) {
 
         List<Method> slashCommands = new ArrayList<>();
 
@@ -65,7 +83,13 @@ public class AnnotationProcessor
         return slashCommands;
     }
 
-    public static List<Method> findChatMsgAnnotations(List<Object> botTasks) {
+
+    /**
+     * internal helper method for initialisation of the DiscordBot instance
+     * @param botTasks the tasks that are to be scanned for @OnChatMessage Annotation
+     * @return a list with all methods that have the @OnChatMessage Annotation
+     */
+    static List<Method> findChatMsgAnnotations(List<Object> botTasks) {
 
         List<Method> chatMsgAnnotations = new ArrayList<>();
 
@@ -82,7 +106,13 @@ public class AnnotationProcessor
         return chatMsgAnnotations;
     }
 
-    public static List<Method> findButtonAnnotations(List<Object> botTasks) {
+
+    /**
+     * internal helper method for initialisation of the DiscordBot instance
+     * @param botTasks the tasks that are to be scanned for @Button or @ButtonHandler Annotation
+     * @return a list with all methods that have the @Button or @ButtonHandler Annotation
+     */
+    static List<Method> findButtonAnnotations(List<Object> botTasks) {
 
         List<Method> buttonAnnotations = new ArrayList<>();
 
