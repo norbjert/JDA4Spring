@@ -25,7 +25,8 @@ Step 4: create a method with @OnChatMessage if you want it to respond to or proc
 if you want to add slash commands to your bot. Here's a little example:
 
 
-`@BotTask("ExampleBot")
+`
+@BotTask("ExampleBot")
 public class ExampleBot {
 
     @SlashCommand(command = "ping", description = "Calculate ping of the bot")
@@ -47,7 +48,8 @@ public class ExampleBot {
     public void onAllChatMessages(MessageReceivedEvent event){
         System.out.println(event.getAuthor().getName() + " has sent: " + event.getMessage().getContentRaw());
     }
-}`
+}
+`
 
 
 Step 5: That's it! That's all you need, enjoy your new discord bot!
