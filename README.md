@@ -55,7 +55,8 @@ public class ExampleBot {
 Step 5: That's it! That's all you need, enjoy your new discord bot!
 
 
-
+If you need help with getting things set up right or have any questions or suggestions, feel free to join my discord:
+https://discord.gg/dJeKP7Nyup
 
 
 
