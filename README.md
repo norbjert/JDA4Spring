@@ -11,9 +11,7 @@ Step 0: create a spring boot project if you haven't already
 
 Step 1: add the following to your build.gradle, to import the library:
 
-`implementation 'net.dv8tion:JDA:5.0.0-beta.20'`
-
-`implementation 'xyz.norbjert:jda4spring:0.0.1'`
+`implementation 'xyz.norbjert:jda4spring:0.0.3'`
 
 Step 2: add the configuration with your discord bot api key, etc... either in the application.properties or (perferably)
 in a separate file, and set the config file location in the application.properties, for example:
@@ -27,7 +25,8 @@ Step 4: create a method with @OnChatMessage if you want it to respond to or proc
 if you want to add slash commands to your bot. Here's a little example:
 
 
-`@BotTask("ExampleBot")
+`
+@BotTask("ExampleBot")
 public class ExampleBot {
 
     @SlashCommand(command = "ping", description = "Calculate ping of the bot")
@@ -49,12 +48,15 @@ public class ExampleBot {
     public void onAllChatMessages(MessageReceivedEvent event){
         System.out.println(event.getAuthor().getName() + " has sent: " + event.getMessage().getContentRaw());
     }
-}`
+}
+`
 
 
 Step 5: That's it! That's all you need, enjoy your new discord bot!
 
 
+If you need help with getting things set up right or have any questions or suggestions, feel free to join my discord:
+https://discord.gg/dJeKP7Nyup
 
 
 
@@ -64,7 +66,10 @@ Step 5: That's it! That's all you need, enjoy your new discord bot!
 
 
 
+if JDA itself updates to a new version and you really want to use the new feature(s) without waiting for me to update the dependencies you can try adding the newest version as a dependency yourself. Keep in mind this might break JDA4Spring if the newest JDA update has some breaking changes, which tends to happen sometimes. Here's an example on how you can instead use a different version of JDA:
 
+`implementation 'net.dv8tion:JDA:5.0.0-beta.${version}'`
+(replace ${version} with whatever version you want)
 
 
 
