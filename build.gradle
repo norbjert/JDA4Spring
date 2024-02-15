@@ -1,14 +1,18 @@
+import org.springframework.boot.gradle.plugin.SpringBootPlugin
+
 plugins {
     id 'java-library'
     id 'org.springframework.boot' version '3.0.0' apply false
     id 'io.spring.dependency-management' version '1.1.0'
     id 'maven-publish'
     id 'signing'
+
 }
 
+
 group = 'xyz.norbjert'
-archivesBaseName = "xyz.norbjert.jda4spring"
-version = '0.0.1'
+archivesBaseName = "jda4spring"
+version = '0.0.3'
 sourceCompatibility = '17'
 
 configurations {
@@ -34,12 +38,18 @@ artifacts {
     archives javadocJar, sourcesJar
 }
 
+signing {
+    sign configurations.archives
+}
+
 
 dependencyManagement {
     imports {
-        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+        mavenBom SpringBootPlugin.BOM_COORDINATES
     }
 }
+
+
 
 
 publishing {

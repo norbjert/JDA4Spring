@@ -35,8 +35,20 @@ import java.lang.annotation.*;
 //@Reflective(AnnotationProcessor.class)//todo
 public @interface SlashCommand {
 
+    /**
+     *  a short description of the option and what its for
+     * @return a short description of the option and what its for
+     */
     String command() default "<using method name>";
+    /**
+     *  a short description of the option and what its for
+     * @return a short description of the option and what its for
+     */
     String description() default "<no description provided>";
+    /**
+     *  a short description of the option and what its for
+     * @return a short description of the option and what its for
+     */
     SlashCommandArg[] options() default {};
 
 }

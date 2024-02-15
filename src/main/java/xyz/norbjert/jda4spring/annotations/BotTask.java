@@ -11,6 +11,10 @@ import java.lang.annotation.*;
 @Component
 public @interface BotTask {
 
+    /**
+     *  a short description of the option and what its for
+     * @return a short description of the option and what its for
+     */
     @AliasFor(annotation = Component.class)
     String value() default "";
 

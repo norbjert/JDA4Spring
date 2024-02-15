@@ -29,9 +29,20 @@ public class JDA4SpringMain {
     private final ApplicationContext appContext;
     private final String configFileLocation;
 
+    /**
+     * constructor for initialising everything jda4spring
+     * if for whatever reason spring boot doesnt automatically initialise it, you can do so manually by creating
+     * a helper class and pass the ApplicationContext and the .config file location in here
+     *
+     * @param appContext         the spring boot application context
+     * @param configFileLocation a string to the location of the .config file
+     */
     public JDA4SpringMain(
             ApplicationContext appContext,
             @Value("${jda4spring.configFileLocation:src/main/resources/application.properties}") String configFileLocation) {
+
+        logger.info("jda4spring initialisation started...");
+
         JDA4SpringMain.instance = this;
         this.appContext = appContext;
         this.configFileLocation = configFileLocation;
@@ -49,15 +60,10 @@ public class JDA4SpringMain {
                 String apiToken =
                         allEntriesForThisBot.stream().filter(t -> t.type().contains("token")).toList().get(0).value()
                                 .replace(" ", "");
-                List<Object> botTasks =
-                        getEventListenersForBotAsBotTasks(
-                                allEntriesForThisBot.stream().filter(t -> t.type().contains("tasks")).toList().get(0).value());
-                Activity activity =
-                        getActivity(
-                                allEntriesForThisBot.stream().filter(t -> t.type().contains("activity")).toList().get(0));
-                List<GatewayIntent> gatewayIntents =
-                        getGatewayIntents(
-                                allEntriesForThisBot.stream().filter(t -> t.type().contains("intents")).toList().get(0).value());
+
+                List<Object> botTasks = getEventListenersForBotAsBotTasks(allEntriesForThisBot);
+                Activity activity = getActivity(allEntriesForThisBot);
+                List<GatewayIntent> gatewayIntents = getGatewayIntents(allEntriesForThisBot);
 
                 DiscordBot newDiscordBotAccountInstance = new DiscordBot(apiToken, botTasks, activity, gatewayIntents);
                 bots.add(newDiscordBotAccountInstance);
@@ -84,7 +90,7 @@ public class JDA4SpringMain {
                 String line = scanner.nextLine();
                 if (line.startsWith("bots.")) {
                     String name = line.split("\\.")[1];
-                    String type = line.split("=")[0].replace(" ","");
+                    String type = line.split("=")[0].replace(" ", "");
                     String value = line.split("=")[1];
                     re.add(new BotConfigDataMapper(
                             name,
@@ -103,46 +109,69 @@ public class JDA4SpringMain {
         return re;
     }
 
-    private List<Object> getEventListenersForBotAsBotTasks(String tasks) {
-        tasks = tasks.replace(" ", "");
-        if (tasks.isEmpty()) {
-            logger.warn("no tasks defined for bot, are you missing a \"bots.example.tasks = TaskBeanName\" line for you bot?");
-            return new ArrayList<>();
+    private List<Object> getEventListenersForBotAsBotTasks(List<BotConfigDataMapper> allEntriesForCurrentBotAccount) {
+
+        try {
+            String tasks = allEntriesForCurrentBotAccount.stream().filter(t -> t.type().contains("tasks")).toList().get(0).value();
+            tasks = tasks.replace(" ", "");
+            if (tasks.isEmpty()) {
+                logger.warn("no tasks defined for bot, are you missing a \"bots.example.tasks = TaskBeanName\" line for you bot?");
+                return new ArrayList<>();
+            }
+            return Stream.of(tasks.split(","))
+                    .map(appContext::getBean)
+                    .toList();
+        } catch (IndexOutOfBoundsException e) {
+            logger.warn("no bot tasks set in jda4spring config file");
         }
-        return Stream.of(tasks.split(","))
-                .map(appContext::getBean)
-                .toList();
+        return new ArrayList<>(GatewayIntent.DEFAULT);
     }
 
-    private List<GatewayIntent> getGatewayIntents(String gatewayIntents) {
-        gatewayIntents = gatewayIntents.replace(" ", "").toUpperCase().replace("GatewayIntent.", "");
-        if (gatewayIntents.isEmpty()) {
-            logger.info("no Gateway Intents defined");
-            return new ArrayList<>();
+    private List<GatewayIntent> getGatewayIntents(List<BotConfigDataMapper> allEntriesForCurrentBotAccount) {
+
+        try {
+            String gatewayIntents = allEntriesForCurrentBotAccount.stream().filter(t -> t.type().contains("intents")).toList().get(0).value();
+            gatewayIntents = gatewayIntents.replace(" ", "").toUpperCase().replace("GatewayIntent.", "");
+            if (gatewayIntents.isEmpty()) {
+                logger.info("no Gateway Intents defined");
+                return new ArrayList<>();
+            }
+            return Stream.of(gatewayIntents.split(","))
+                    .map(GatewayIntent::valueOf)
+                    .toList();
+        } catch (IndexOutOfBoundsException e) {
+            logger.warn("no gateway intents set in jda4spring config file, continuing with default GatewayIntents");
         }
-        return Stream.of(gatewayIntents.split(","))
-                .map(GatewayIntent::valueOf)
-                .toList();
-        //return List.of(GatewayIntent.values());
+        catch (IllegalArgumentException e){
+            logger.error(e.getMessage());
+            logger.error("This was probably caused by an incorrect value for the gateway intents in the jda4spring config file, using default gateway intents now");
+        }
+        return new ArrayList<>(GatewayIntent.DEFAULT);
     }
 
     //returns the JDA Activity that got configured in the .config file
-    private Activity getActivity(BotConfigDataMapper activity) {
+    private Activity getActivity(List<BotConfigDataMapper> allEntriesForCurrentBotAccount) {
+        try {
+            BotConfigDataMapper activity = allEntriesForCurrentBotAccount.stream().filter(t -> t.type().contains("activity")).toList().get(0);
 
-        if (activity.type().endsWith("playing")) {
-            return Activity.playing(activity.value());
-        } else if (activity.type().endsWith("listening")) {
-            return Activity.listening(activity.value());
-        } else if (activity.type().endsWith("watching")) {
-            return Activity.watching(activity.value());
-        } else if (activity.type().endsWith("competing")) {
-            return Activity.competing(activity.value());
-        } else if (activity.type().endsWith("activity")) {
-            return Activity.customStatus(activity.value());
-        } else {
-            logger.warn("no activity set for:" + activity.name());
-            return Activity.customStatus("");
+            if (activity.type().endsWith("playing")) {
+                return Activity.playing(activity.value());
+            } else if (activity.type().endsWith("listening")) {
+                return Activity.listening(activity.value());
+            } else if (activity.type().endsWith("watching")) {
+                return Activity.watching(activity.value());
+            } else if (activity.type().endsWith("competing")) {
+                return Activity.competing(activity.value());
+            } else if (activity.type().endsWith("activity")) {
+                return Activity.customStatus(activity.value());
+            } else {
+                logger.warn("no activity set for:" + activity.name());
+                return Activity.customStatus("");
+            }
+        } catch (IndexOutOfBoundsException e) {
+            logger.info("no activity set in jda4spring config file");
         }
+        return null;
     }
 
 

@@ -7,6 +7,10 @@ import java.lang.annotation.*;
 //@Reflective(AnnotationProcessor.class)//Todo
 public @interface Button {
 
+    /**
+     *  a short description of the option and what its for
+     * @return a short description of the option and what its for
+     */
     String value();
 
 }
