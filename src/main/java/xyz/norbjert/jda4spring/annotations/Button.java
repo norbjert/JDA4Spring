@@ -4,6 +4,7 @@ import java.lang.annotation.*;
 
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+@SuppressWarnings("unused")
 //@Reflective(AnnotationProcessor.class)//Todo
 public @interface Button {
 

@@ -10,6 +10,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 //@Reflective(AnnotationProcessor.class)//Todo
+@SuppressWarnings("unused")
 public @interface OnChatMessage {
 
     /**

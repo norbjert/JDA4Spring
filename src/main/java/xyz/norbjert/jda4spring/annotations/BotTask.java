@@ -16,6 +16,7 @@ public @interface BotTask {
      * @return a short description of the option and what its for
      */
     @AliasFor(annotation = Component.class)
+    @SuppressWarnings("unused")
     String value() default "";
 
 }
