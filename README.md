@@ -11,7 +11,7 @@ Step 0: create a spring boot project if you haven't already
 
 Step 1: add the following to your build.gradle, to import the library:
 
-`implementation 'xyz.norbjert:jda4spring:0.0.3'`
+`implementation 'xyz.norbjert:jda4spring:0.0.4'`
 
 Step 2: add the configuration with your discord bot api key, etc... either in the application.properties or (perferably)
 in a separate file, and set the config file location in the application.properties, for example:
