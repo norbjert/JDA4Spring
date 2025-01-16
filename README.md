@@ -15,10 +15,25 @@ Step 1: add the following line to your build.gradle to import the library:
 implementation 'xyz.norbjert:jda4spring:0.0.4'
 ```
 
-Step 2: add the configuration with your discord bot api key, etc... either in the application.properties or (perferably)
-in a separate file, and set the config file location in the application.properties, for example:
-jda4spring.configFileLocation = src/main/resources/jda4spring.config
-for the contents of that config file, look into the example I provided in this repository
+Step 2: Add the following configuration to your `application.properties`:
+
+```
+#Example setup
+###     Note: the name can be anything you want, and is only used to link the entries together. The bots account name can be a good option
+bots.SomeConvenientName.token = yourBotApiTokenHere
+bots.SomeConvenientName.tasks = Comma,Seperated,List,Of,Bot,Tasks  (aka what you name it in the @BotTask("xyz") annotation, see example below)
+###     Note: you can add .playing/.listening/.watching or .competing after the .activity to get the actual "Playing xyz" activities
+bots.SomeConvenientName.activity.playing = some custom activity text for your bot
+###     GatewayIntents you plan on using in your code, some common examples blow. For more info, see: https://jda.wiki/using-jda/gateway-intents-and-member-cache-policy/
+bots.SomeConvenientName.intents = GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+```
+
+Step 2.5 **(optional)**: For better security its recommended to keep your sensitive credentials in a seperate file. 
+You can achieve this moving the configuration from Step 2 into a `jda4spring.config` file and referencing its location in the `application.properties`:
+
+```jda4spring.configFileLocation = src/main/resources/jda4spring.config```
+
+You can find an example for this setup [here](https://github.com/norbjert/JDA4Spring/tree/master/src/main/resources).
 
 Step 3: add a new class with the @BotTask("someUniqueName") annotation. Make sure "someUniqueName" matches
 with the Tasks you have specified in your jda4spring.config file
