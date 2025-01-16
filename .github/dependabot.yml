@@ -8,9 +8,9 @@ updates:
     schedule:
       interval: "daily"
       
-updates:
+#updates:
   # Maintain dependencies for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "daily"
+#  - package-ecosystem: "github-actions"
+#    directory: "/"
+#    schedule:
+#      interval: "daily"
