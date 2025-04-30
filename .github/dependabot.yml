@@ -6,7 +6,9 @@ updates:
     directory: "/"
     # Check the npm registry for updates every day (weekdays)
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    assignees:
+      - norbjert      
       
 #updates:
   # Maintain dependencies for GitHub Actions
