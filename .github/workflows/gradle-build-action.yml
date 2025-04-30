@@ -26,7 +26,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: build
-        run: ./gradlew bootjar #TODO: actually run build, but that requires fixing the tests
+        run: ./gradlew jar #TODO: actually run build, but that requires fixing the tests
 
       #- name: Run tests
       #  run: |
