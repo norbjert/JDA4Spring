@@ -1,14 +1,48 @@
-#name: dependencies
+name: Java CI with Gradle
 
-#on: [ push ]
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
-#jobs:
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#    - name: Checkout sources
-#      uses: actions/checkout@v4
-#    - name: Setup Gradle
-#      uses: gradle/actions/setup-gradle@v3
-#    - name: Build with Gradle
-#      run: ./gradlew build
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: build
+        run: ./gradlew bootjar #TODO: actually run build, but that requires fixing the tests
+
+      #- name: Run tests
+      #  run: |
+      #    ./gradlew test \
+      #      --info \
+      #      --stacktrace \
+      #      --console=plain \
+      #      -Dorg.gradle.logging.level=DEBUG \
+      #      -Dorg.gradle.daemon=false
+
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            build/reports/tests/test/
+            build/test-results/test/
