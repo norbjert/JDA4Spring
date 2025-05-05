@@ -38,7 +38,14 @@ public class DiscordBot extends ListenerAdapter {
     private final List<Method> chatInteractionMethods;
     private final List<Method> buttonInteractionMethods;
 
-
+    /**
+     * @param apiToken the API token for a discord bot
+     * @param botTasks a list of tasks (classes with the @BotTask annotation) for the given discord bot
+     * @param activity the activity that should be displayed for a bot f.e. "playing xyz"
+     * @param gatewayIntents a list of gateway intents, to inform discord about what you intend to have the bot do and access
+     * @throws LoginException if the JDA had problems authenticating with the provided API token
+     * @throws InterruptedException if the process gets interrupted during the initialization of the JDA instance
+     */
     public DiscordBot(String apiToken, List<Object> botTasks, Activity activity, List<GatewayIntent> gatewayIntents) throws LoginException, InterruptedException {
         jda = JDABuilder.createLight(apiToken, gatewayIntents)
                 .addEventListeners(this)
