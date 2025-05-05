@@ -38,11 +38,6 @@ artifacts {
     archives javadocJar, sourcesJar
 }
 
-signing {
-    sign configurations.archives
-}
-
-
 dependencyManagement {
     imports {
         mavenBom SpringBootPlugin.BOM_COORDINATES
