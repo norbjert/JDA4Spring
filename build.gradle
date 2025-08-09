@@ -95,7 +95,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     //discord api
-    implementation 'net.dv8tion:JDA:5.6.1'
+    implementation 'net.dv8tion:JDA:6.0.0-preview'
 }
 
 tasks.named('test') {
