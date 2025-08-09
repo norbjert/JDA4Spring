@@ -1,23 +1,106 @@
-name: Dependabot auto-merge
-on: pull_request
+name: Auto-merge Dependabot PRs
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
 
 permissions:
   contents: write
   pull-requests: write
+  checks: read
+  statuses: read
+
+concurrency:
+  group: automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  MERGE_METHOD: squash
 
 jobs:
-  dependabot-auto-merge:
+  automerge:
+    if: >
+      (github.event.pull_request.user.login == 'dependabot[bot]' || github.event.pull_request.user.login == 'dependabot') &&
+      github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+
     steps:
-      - name: Approve PR
-        run: gh pr review --approve "$PR_URL"
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for Gradle CI check only
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          running-workflow-name: "Auto-merge Dependabot PRs"
+          # Only the build job needs to be successful
+          check-name: "build"
+          allowed-conclusions: success
+          # Avoid waiting on this workflow itself
+          ignore-checks: |
+            automerge
+            Auto-merge Dependabot PRs
+            Auto-merge Dependabot PRs / automerge
+
+      - name: Approve PR (if reviews are required)
+        uses: hmarr/auto-approve-action@v3
+        with:
+          pull-request-number: ${{ github.event.pull_request.number }}
         env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          
-      - name: Enable auto-merge
-        run: gh pr merge --auto --merge "$PR_URL"
-        env:
-          PR_URL: ${{github.event.pull_request.html_url}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Try to enable auto-merge
+        id: enable-automerge
+        continue-on-error: true
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: ${{ env.MERGE_METHOD }}
+
+      - name: Fallback direct merge via API
+        if: steps.enable-automerge.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const method = process.env.MERGE_METHOD || 'squash';
+            try {
+              const prInfo = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+              const state = prInfo.data.mergeable_state || 'unknown';
+              if (state && ['blocked', 'draft', 'dirty', 'unknown'].includes(state)) {
+                core.setFailed('PR not mergeable. mergeable_state=' + state);
+                return;
+              }
+              const res = await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                merge_method: method
+              });
+              core.info('Merged PR #' + pr.number + ' with method=' + method + '. sha=' + res.data.sha);
+            } catch (e) {
+              core.setFailed('Direct merge failed: ' + (e && e.message ? e.message : String(e)));
+            }
+
+      - name: Print diagnostics if merge still blocked
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            core.info('Diagnostics for PR #' + pr.number);
+            core.info('Draft: ' + pr.draft);
+            core.info('Head: ' + pr.head.ref + ' @ ' + pr.head.sha);
+            core.info('Base: ' + pr.base.ref);
+            core.setFailed('Auto-merge failed. Verify allowed merge methods, allow auto-merge, required reviews/code owners, required status checks.')

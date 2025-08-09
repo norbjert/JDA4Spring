@@ -1,24 +1,28 @@
-
 version: 2
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     assignees:
       - "norbjert"
-    target-branch: "master"
-    auto-merge:
-      enabled: true
+    reviewers:
+      - "norbjert"
+    target-branch: "main"
     commit-message:
-      prefix: "deps"
+      prefix: "deps: "
       prefix-development: "deps(dev)"
     pull-request-branch-name:
       separator: "-"
     labels:
       - "dependencies"
-    # Only merge if all tests pass
-    merge:
-      strategy: "auto"
+
+
+      #    ignore:
+      #      - dependency-name: "org.xxx.xxx"
+      #        versions: [">1.8.0"]
+      # Only merge if all tests pass
+      #    merge:
+      #      strategy: "auto"
       # This ensures PRs are only merged if all required checks pass
-      require-all-status-checks: true
+#      require-all-status-checks: true
