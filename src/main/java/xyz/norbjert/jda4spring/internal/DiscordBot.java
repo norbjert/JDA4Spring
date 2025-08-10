@@ -137,48 +137,27 @@ public class DiscordBot extends ListenerAdapter {
      */
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
-
-        for (Method current : chatInteractionMethods) {
-
-            //if "" -> gets called on every msg
-            if (current.getAnnotation(OnChatMessage.class).ifMsgContains().isEmpty()
-                    //if msg contained the filter word
-                    || event.getMessage().getContentRaw().contains(current.getAnnotation(OnChatMessage.class).ifMsgContains())) {
-
-                try {
-
-                    Object declaringClass = botTasks.stream().filter(e -> e.getClass().equals(current.getDeclaringClass())).toList().get(0);
-                    invokeChatInteractionMethod(current, declaringClass, event);
-
-                } catch (InvocationTargetException ex) {
-                    logger.error("InvocationTargetException:" + ex.getMessage());
-                    throw new RuntimeException(ex);
-                } catch (IllegalAccessException ex) {
-                    logger.error("IllegalAccessException" + ex.getMessage());
-                    throw new RuntimeException(ex);
-                }
+        for (Method method : chatInteractionMethods) {
+            OnChatMessage cfg = method.getAnnotation(OnChatMessage.class);
+            if (cfg == null) {
+                continue;
             }
-        }
-    }
 
-    private void invokeChatInteractionMethod(Method annotatedMethod, Object declaringClass, MessageReceivedEvent event) throws InvocationTargetException, IllegalAccessException {
-
-        if (annotatedMethod.trySetAccessible()) {
-            switch (annotatedMethod.getParameterCount()) {
-                case 0 -> annotatedMethod.invoke(declaringClass);
-                case 1 -> {
-                    if (annotatedMethod.getParameterTypes()[0].getTypeName().contains("MessageReceivedEvent")) {
-                        annotatedMethod.invoke(declaringClass, event);
-                    } else {
-                        logger.error("ERROR INVOKING @OnChatMessage annotation");
-                    }
-                }
-                default ->
-                    //ToDo: smart implementation that automatically maps correct variables to the method
-                        annotatedMethod.invoke(declaringClass, event);
+            if (cfg.ignoreBots() && event.getAuthor().isBot()) {
+                continue;
             }
-        } else {
-            logger.error("annotatedMethod \"" + annotatedMethod.getName() + "\" is not public and Java language access control cannot be suppressed");
+
+            if (!matchesAllFilters(event, cfg)) {
+                continue;
+            }
+
+            Object declaringInstance = getDeclaringInstance(method);
+            if (declaringInstance == null) {
+                logger.error("Could not resolve declaring instance for method: {}", method.getName());
+                continue;
+            }
+
+            invokeChatInteractionMethod(method, declaringInstance, event);
         }
     }
 
