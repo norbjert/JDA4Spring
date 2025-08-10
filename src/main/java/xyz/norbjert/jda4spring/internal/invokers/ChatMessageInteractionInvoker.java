@@ -1,4 +1,4 @@
-package xyz.norbjert.jda4spring.internal.util;
+package xyz.norbjert.jda4spring.internal.invokers;
 
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
@@ -7,7 +7,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChatMessageInteractionHandler {
+public class ChatMessageInteractionInvoker {
 
     public static void invokeChatInteractionMethod(Method annotatedMethod, Object declaringClass, MessageReceivedEvent event) {
         List<Object> args = new ArrayList<>();

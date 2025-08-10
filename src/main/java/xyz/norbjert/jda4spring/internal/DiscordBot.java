@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Objects;
 
 import static xyz.norbjert.jda4spring.internal.OnChatMessageFilterProcessor.matchesAllFilters;
-import static xyz.norbjert.jda4spring.internal.util.ButtonInteractionHandler.invokeButtonInteractionMethod;
-import static xyz.norbjert.jda4spring.internal.util.ChatMessageInteractionHandler.invokeChatInteractionMethod;
-import static xyz.norbjert.jda4spring.internal.util.SlashCommandInteractionHandler.invokeSlashMethod;
+import static xyz.norbjert.jda4spring.internal.invokers.ButtonInteractionInvoker.invokeButtonInteractionMethod;
+import static xyz.norbjert.jda4spring.internal.invokers.ChatMessageInteractionInvoker.invokeChatInteractionMethod;
+import static xyz.norbjert.jda4spring.internal.invokers.SlashCommandInteractionInvoker.invokeSlashMethod;
 
 /**
  * Represents a single Discord bot account managed by JDA4Spring.

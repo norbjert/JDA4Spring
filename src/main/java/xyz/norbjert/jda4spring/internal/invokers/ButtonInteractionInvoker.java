@@ -1,4 +1,4 @@
-package xyz.norbjert.jda4spring.internal.util;
+package xyz.norbjert.jda4spring.internal.invokers;
 
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import org.slf4j.Logger;
@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class ButtonInteractionHandler {
+public class ButtonInteractionInvoker {
 
-    private static final Logger logger = LoggerFactory.getLogger(ButtonInteractionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(ButtonInteractionInvoker.class);
 
     public static void invokeButtonInteractionMethod(Method annotatedMethod, Object declaringClass, ButtonInteractionEvent event) throws InvocationTargetException, IllegalAccessException {
 

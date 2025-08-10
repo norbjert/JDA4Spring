@@ -1,4 +1,4 @@
-package xyz.norbjert.jda4spring.internal.util;
+package xyz.norbjert.jda4spring.internal.invokers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package xyz.norbjert.jda4spring.internal.util;
+package xyz.norbjert.jda4spring.internal.invokers;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
@@ -18,11 +18,11 @@ import java.util.stream.Collectors;
  * It intelligently resolves method parameters based on the {@link SlashCommandInteractionEvent}
  * and the expected types from Discord's slash command options, allowing for flexible method signatures.
  */
-public class SlashCommandInteractionHandler {
+public class SlashCommandInteractionInvoker {
 
-    private static final Logger logger = LoggerFactory.getLogger(SlashCommandInteractionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(SlashCommandInteractionInvoker.class);
 
-    private SlashCommandInteractionHandler() {
+    private SlashCommandInteractionInvoker() {
         // Private constructor to prevent instantiation of utility class
     }
 
