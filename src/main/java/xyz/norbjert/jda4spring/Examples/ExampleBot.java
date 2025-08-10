@@ -1,10 +1,23 @@
 package xyz.norbjert.jda4spring.Examples;
 
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
 import xyz.norbjert.jda4spring.annotations.BotTask;
+import xyz.norbjert.jda4spring.annotations.Button;
 import xyz.norbjert.jda4spring.annotations.OnChatMessage;
 import xyz.norbjert.jda4spring.annotations.SlashCommand;
+
+import javax.swing.*;
+import java.awt.*;
+import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * a simple example on how to use jda4spring
@@ -42,5 +55,33 @@ public class ExampleBot {
     @OnChatMessage //will be called on any chat message the bot receives
     public void onAllChatMessages(MessageReceivedEvent event){
         System.out.println(event.getAuthor().getName() + " has sent: " + event.getMessage().getContentRaw());
+    }
+
+    @SlashCommand(command = "test-buttons", description = "create an embed with buttons to demo their functionality")
+    void testButtons(SlashCommandInteractionEvent event){
+
+        MessageEmbed eb = new EmbedBuilder()
+                .setColor(new Color(0, 200, 255))
+                .addField("Button-Demo", "", false)
+                .setTimestamp(Instant.now())
+                .build();
+
+        event.replyEmbeds(eb)
+                .addActionRow(
+                        net.dv8tion.jda.api.interactions.components.buttons.Button.primary("hello", "say hello ;)"),
+                        net.dv8tion.jda.api.interactions.components.buttons.Button.danger("delete545435", "delete"))
+                .queue();
+    }
+
+
+    @Button("hello")
+    public void helloButton(ButtonInteractionEvent event) {
+        event.reply("Hello :D").setEphemeral(true).queue();
+    }
+
+    @Button("delete545435")
+    public void deleteMessageButton(ButtonInteractionEvent event) {
+        event.getMessage().delete().queue();
+        event.reply("Message deleted").setEphemeral(true).queue();
     }
 }
