@@ -21,7 +21,7 @@ import java.util.Scanner;
 import java.util.stream.Stream;
 
 /**
- * handles the initialisation process of the individual DiscordBots and configures them with their tasks, activities and API tokens (and soon gateway intents)
+ * handles the initialization process of the individual DiscordBots and configures them with their tasks, activities and API tokens (and soon gateway intents)
  */
 @Component
 public class JDA4SpringMain {
@@ -30,8 +30,8 @@ public class JDA4SpringMain {
     private final String configFileLocation;
 
     /**
-     * constructor for initialising everything jda4spring
-     * if for whatever reason spring boot doesnt automatically initialise it, you can do so manually by creating
+     * constructor for initializing everything jda4spring
+     * if for whatever reason spring boot doesn't automatically initialize it, you can do so manually by creating
      * a helper class and pass the ApplicationContext and the .config file location in here
      *
      * @param appContext         the spring boot application context
@@ -79,7 +79,7 @@ public class JDA4SpringMain {
     }
 
     /**
-     * manually reads the application.properties (or other defined config file) for all bot configurations
+     * manually reads the application.properties (or another defined config file) for all bot configurations
      */
     private List<BotConfigDataMapper> getBotConfigData() {
         List<BotConfigDataMapper> re = new ArrayList<>();
@@ -97,14 +97,13 @@ public class JDA4SpringMain {
                             type,
                             value)
                     );
-                    //System.out.println(new BotConfigDataMapper(name, type, value));
                 }
             }
         } catch (FileNotFoundException e) {
             logger.error("BOT CONFIG FILE NOT FOUND!");
             throw new RuntimeException(e);
         } catch (IndexOutOfBoundsException e) {
-            logger.error("Unexpected Error while reading the config file, a missing value for a key:" + e.getMessage());
+            logger.error("Unexpected Error while reading the config file, a missing value for a key:{}", e.getMessage());
         }
         return re;
     }
@@ -165,7 +164,7 @@ public class JDA4SpringMain {
             } else if (activity.type().endsWith("activity")) {
                 return Activity.customStatus(activity.value());
             } else {
-                logger.warn("no activity set for:" + activity.name());
+                logger.warn("no activity set for:{}", activity.name());
                 return Activity.customStatus("");
             }
         } catch (IndexOutOfBoundsException e) {
@@ -180,9 +179,9 @@ public class JDA4SpringMain {
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Getter
-    private final List<DiscordBot> bots = new ArrayList<>(); //maybe make this statically available?
+    private static final List<DiscordBot> bots = new ArrayList<>();
     @Getter
-    private final Map<String, Object> botTaskBeans; //maybe make this statically available?
+    private final Map<String, Object> botTaskBeans;
     @Getter
     private static JDA4SpringMain instance;
 
@@ -203,7 +202,7 @@ public class JDA4SpringMain {
             }
         }
         if (foundInstances.isEmpty()) {
-            logger.error("Class " + clazz.getName() + " attempted to get a JDA instance, no matches found");
+            logger.error("Class {} attempted to get a JDA instance, no matches found", clazz.getName());
             return null;
         }
         return foundInstances;

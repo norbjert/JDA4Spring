@@ -42,15 +42,16 @@ public class SlashCommandDataFactory {
 
     private static String getSlashCommandName(Method slashMethod) {
 
-        //checks if slash command has capital letters in it (which discord does not allowed to be used for slash commands)
+        //checks if the slash command has capital letters in it (which discord does not allow to be used for slash commands)
         if (!slashMethod.getAnnotation(SlashCommand.class).command().toLowerCase().equals(slashMethod.getAnnotation(SlashCommand.class).command())) {
-            logger.info("Discord does not allow for upper case letters in slash commands, please change " +
-                    slashMethod.getAnnotation(SlashCommand.class).command() + " to lower case");
+            logger.info("Discord does not allow for upper case letters in slash commands, please change {} to lower case",
+                    slashMethod.getAnnotation(SlashCommand.class).command());
         }
 
-        //replaces default name implementation with method name
+        //replaces the default name implementation with method name
         if (slashMethod.getAnnotation(SlashCommand.class).command().equals("<using method name>")) {
-            logger.debug("no name for slash command with method name\"" + slashMethod.getName() + "\", using method name instead");
+            logger.debug("no name for slash command with method name\"{}\", using method name instead",
+                    slashMethod.getName());
             return slashMethod.getName().toLowerCase();
         }
         return slashMethod.getAnnotation(SlashCommand.class).command().toLowerCase();
@@ -60,8 +61,8 @@ public class SlashCommandDataFactory {
 
         //discord limits descriptions to 100 characters max
         if (slashMethod.getAnnotation(SlashCommand.class).description().length() > 100) {
-            logger.info("Discord does not allow for descriptions longer than 100 characters, please change the description of " +
-                    slashMethod.getAnnotation(SlashCommand.class).command() + " to be shorter");
+            logger.info("Discord does not allow for descriptions longer than 100 characters, please change the description of {} to be shorter",
+                    slashMethod.getAnnotation(SlashCommand.class).command());
             return slashMethod.getAnnotation(SlashCommand.class).description().subSequence(0, 99).toString();
         }
         return slashMethod.getAnnotation(SlashCommand.class).description();
