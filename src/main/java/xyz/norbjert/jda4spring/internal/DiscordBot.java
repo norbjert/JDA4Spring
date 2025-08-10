@@ -24,12 +24,21 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 
+import static xyz.norbjert.jda4spring.internal.OnChatMessageFilterProcessor.matchesAllFilters;
+import static xyz.norbjert.jda4spring.internal.util.ButtonInteractionHandler.invokeButtonInteractionMethod;
+import static xyz.norbjert.jda4spring.internal.util.ChatMessageInteractionHandler.invokeChatInteractionMethod;
+import static xyz.norbjert.jda4spring.internal.util.SlashCommandInteractionHandler.invokeSlashMethod;
+
 /**
- * represents a single discord bot account
+ * Represents a single Discord bot account managed by JDA4Spring.
+ * This class extends JDA's {@link ListenerAdapter} to handle incoming Discord events
+ * and dispatches them to annotated methods within the provided bot tasks.
+ * It manages the lifecycle of the JDA instance, including login, activity setting,
+ * and registration of slash commands.
  */
 public class DiscordBot extends ListenerAdapter {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(DiscordBot.class);
     @Getter
     private final List<Object> botTasks;
     @Getter
@@ -39,12 +48,16 @@ public class DiscordBot extends ListenerAdapter {
     private final List<Method> buttonInteractionMethods;
 
     /**
-     * @param apiToken the API token for a discord bot
-     * @param botTasks a list of tasks (classes with the @BotTask annotation) for the given discord bot
-     * @param activity the activity that should be displayed for a bot f.e. "playing xyz"
-     * @param gatewayIntents a list of gateway intents, to inform discord about what you intend to have the bot do and access
-     * @throws LoginException if the JDA had problems authenticating with the provided API token
-     * @throws InterruptedException if the process gets interrupted during the initialization of the JDA instance
+     * Constructs a new {@code DiscordBot} instance, initializes the JDA client,
+     * and registers annotated methods for various Discord interactions.
+     *
+     * @param apiToken The API token for the Discord bot.
+     * @param botTasks A list of Spring-managed beans (classes annotated with {@code @BotTask})
+     *                 that contain methods annotated for Discord interactions.
+     * @param activity The {@link Activity} to be displayed for the bot (e.g., "Playing a game").
+     * @param gatewayIntents A list of {@link GatewayIntent}s specifying which events the bot should receive.
+     * @throws LoginException If there are issues authenticating with the provided API token.
+     * @throws InterruptedException If the process is interrupted while waiting for the JDA instance to become ready.
      */
     public DiscordBot(String apiToken, List<Object> botTasks, Activity activity, List<GatewayIntent> gatewayIntents) throws LoginException, InterruptedException {
         jda = JDABuilder.createLight(apiToken, gatewayIntents)
@@ -64,76 +77,36 @@ public class DiscordBot extends ListenerAdapter {
 
 
     /**
-     * gets called once the bot received a slash command and calls the respective method associated with that slash command
+     * Handles incoming slash command interactions from Discord.
+     * It iterates through registered methods annotated with {@link SlashCommand}
+     * and invokes the matching method based on the command name.
+     *
+     * @param event The {@link SlashCommandInteractionEvent} received from Discord.
      */
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-
-        if (event.getGuild() == null) {
-            logger.info("Received: /" + event.getName()
-                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
-                    + " in channel: " + event.getChannel().getName()
-                    + " via direct message"
-                    + " from user: " + event.getUser().getName());
-        } else {
-            logger.info("Received: /" + event.getName()
-                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
-                    + " in channel: " + event.getChannel().getName()
-                    + " on server: " + Objects.requireNonNull(event.getGuild()).getName()
-                    + " from user: " + event.getUser().getName());
-        }
-
+        logSlashCommandInteractions(event);
 
         for (Method slashMethod : slashCommandMethods) {
 
             //if the incoming slash command matches the command="xyz" variable of the @SlashCommand annotation
             if (event.getName().equalsIgnoreCase(slashMethod.getAnnotation(SlashCommand.class).command())
-                    //if the incoming slash command matches the java method name, not recommended but works a secondary option for lazy ppl
+                    //if the incoming slash command matches the java method name, not recommended but works as a secondary option for lazy ppl
                     || event.getName().equals(slashMethod.getName())) {
-                try {
 
-                    //gets the botTask that declares the method
-                    Object declaringClass = botTasks.stream().filter(e -> e.getClass().equals(slashMethod.getDeclaringClass())).toList().get(0);
-                    invokeSlashMethod(slashMethod, declaringClass, event);
-                    return;
-
-                } catch (InvocationTargetException ex) {
-                    logger.error("InvocationTargetException:" + ex.getMessage());
-                    throw new RuntimeException(ex);
-                } catch (IllegalAccessException ex) {
-                    logger.error("IllegalAccessException" + ex.getMessage());
-                    throw new RuntimeException(ex);
-                }
+                invokeSlashMethod(slashMethod, getDeclaringInstance(slashMethod), event);
+                return;
             }
         }
-        logger.error("SlashCommand " + event.getName() + " was called but could not found");
+        logger.error("SlashCommand {} was called but was never declared properly.", event.getName());
     }
-
-    private void invokeSlashMethod(Method slashMethod, Object declaringClass, SlashCommandInteractionEvent event) throws InvocationTargetException, IllegalAccessException {
-
-        if (slashMethod.trySetAccessible()) {
-            switch (slashMethod.getParameterCount()) {
-                case 0 -> slashMethod.invoke(declaringClass);
-                case 1 -> {
-                    //System.out.println(slashMethod.getParameterTypes()[0]);
-                    if (slashMethod.getParameterTypes()[0].getTypeName().contains("SlashCommandInteractionEvent")) {
-                        slashMethod.invoke(declaringClass, event);
-                    } else {
-                        slashMethod.invoke(declaringClass, event.getOptions().stream().map(OptionMapping::getAsString).toList());
-                    }
-                }
-                default ->
-                    //ToDo: smart implementation that automatically maps correct variables to the method
-                        slashMethod.invoke(declaringClass, event, event.getOptions().stream().map(OptionMapping::getAsString).toList());
-            }
-        } else {
-            logger.error("slashMethod \"" + slashMethod.getName() + "\" is not public and Java language access control cannot be suppressed");
-        }
-    }
-
 
     /**
-     * gets called once the bot received a chat message and calls the respective method(s) to handle it
+     * Handles incoming chat messages received by the bot.
+     * It iterates through registered methods annotated with {@link OnChatMessage},
+     * applies the defined filters, and invokes the matching methods.
+     *
+     * @param event The {@link MessageReceivedEvent} received from Discord.
      */
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
@@ -163,25 +136,30 @@ public class DiscordBot extends ListenerAdapter {
 
 
     /**
-     * gets called once the bot received a Button Interaction and calls the respective method(s) to handle it
+     * Handles incoming button interaction events from Discord.
+     * It iterates through registered methods annotated with {@link Button} or {@link ButtonHandler}
+     * and invokes the appropriate method based on the button's custom ID.
+     *
+     * @param event The {@link ButtonInteractionEvent} received from Discord.
      */
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
 
         System.out.println("eventID:"+event.getComponentId());
 
-        for (Method current : buttonInteractionMethods) {
+        for (Method buttonMethod : buttonInteractionMethods) {
 
             //ButtonHandler -> gets called on every button interaction
-            if (current.getAnnotation(ButtonHandler.class) != null
+            if (buttonMethod.getAnnotation(ButtonHandler.class) != null
                     //if button event matches the ID of the @Button annotation
-                    || (current.getAnnotation(Button.class) != null &&
-                            event.getComponentId().equals(current.getAnnotation(Button.class).value()))) {
+                    || (buttonMethod.getAnnotation(Button.class) != null &&
+                            event.getComponentId().equals(buttonMethod.getAnnotation(Button.class).value()))) {
 
                 try {
 
-                    Object declaringClass = botTasks.stream().filter(e -> e.getClass().equals(current.getDeclaringClass())).toList().get(0);
-                    invokeButtonInteractionMethod(current, declaringClass, event);
+                    Object declaringInstance = getDeclaringInstance(buttonMethod);
+                    
+                    invokeButtonInteractionMethod(buttonMethod, declaringInstance, event);
 
                 } catch (InvocationTargetException ex) {
                     logger.error("InvocationTargetException:" + ex.getMessage());
@@ -194,26 +172,39 @@ public class DiscordBot extends ListenerAdapter {
         }
     }
 
-    private void invokeButtonInteractionMethod(Method annotatedMethod, Object declaringClass, ButtonInteractionEvent event) throws InvocationTargetException, IllegalAccessException {
-
-        if (annotatedMethod.trySetAccessible()) {
-            switch (annotatedMethod.getParameterCount()) {
-                case 0 -> annotatedMethod.invoke(declaringClass);
-                case 1 -> {
-                    //System.out.println(annotatedMethod.getParameterTypes()[0]);
-                    if (annotatedMethod.getParameterTypes()[0].getTypeName().contains("ButtonInteractionEvent")) {
-                        annotatedMethod.invoke(declaringClass, event);
-                    } else {
-                        logger.error("ERROR INVOKING @Button or @ButtonHandler annotation");
-                    }
-                }
-                default ->
-                    //ToDo: smart implementation that automatically maps correct variables to the method
-                        annotatedMethod.invoke(declaringClass, event);
-            }
+    /**
+     * logs every slash command interaction received by the bot
+     * @param event the event that triggered the function
+     */
+    //todo: consider configuring the logging via log levels
+    private void logSlashCommandInteractions(SlashCommandInteractionEvent event){
+        if (event.getGuild() == null) {
+            logger.info("Received: /" + event.getName()
+                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
+                    + " in channel: " + event.getChannel().getName()
+                    + " via direct message"
+                    + " from user: " + event.getUser().getName());
         } else {
-            logger.error("annotatedMethod \"" + annotatedMethod.getName() + "\" is not public and Java language access control cannot be suppressed");
+            logger.info("Received: /" + event.getName()
+                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
+                    + " in channel: " + event.getChannel().getName()
+                    + " on server: " + Objects.requireNonNull(event.getGuild()).getName()
+                    + " from user: " + event.getUser().getName());
         }
     }
 
+    /**
+     * helper method to get the botTask that declares the method
+     * @param method the method to get the declaring instance for
+     * @return the botTask that declares the method, or null if not found
+     */
+    private Object getDeclaringInstance(Method method) {
+        Class<?> declaringClass = method.getDeclaringClass();
+        for (Object task : botTasks) {
+            if (task.getClass().equals(declaringClass)) {
+                return task;
+            }
+        }
+        return null;
+    }
 }
