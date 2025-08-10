@@ -145,13 +145,13 @@ public class DiscordBot extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
 
-        System.out.println("eventID:"+event.getComponentId());
+        logger.debug("eventID: {}", event.getComponentId());
 
         for (Method buttonMethod : buttonInteractionMethods) {
 
             //ButtonHandler -> gets called on every button interaction
             if (buttonMethod.getAnnotation(ButtonHandler.class) != null
-                    //if button event matches the ID of the @Button annotation
+                    //if the button event matches the ID of the @Button annotation
                     || (buttonMethod.getAnnotation(Button.class) != null &&
                             event.getComponentId().equals(buttonMethod.getAnnotation(Button.class).value()))) {
 
