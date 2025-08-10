@@ -7,6 +7,9 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Handles the invocation of methods annotated with {@code @Button}.
+ */
 public class ButtonInteractionInvoker {
 
     private static final Logger logger = LoggerFactory.getLogger(ButtonInteractionInvoker.class);

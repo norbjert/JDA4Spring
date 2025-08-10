@@ -17,6 +17,7 @@ public @interface Button {
 
     /**
      *  the ID of the button
+     *  @return the ID of the button
      */
     String value();
 
