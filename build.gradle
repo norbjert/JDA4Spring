@@ -2,23 +2,20 @@ import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 plugins {
     id 'java-library'
-    id 'org.springframework.boot' version '3.5.4'
+    id 'org.springframework.boot' version '3.5.4' apply false
     id 'io.spring.dependency-management' version '1.1.7'
     id 'maven-publish'
     id 'signing'
-
 }
 
-
 group = 'xyz.norbjert'
-version = '0.0.6'
+version = '0.0.7'
 
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
 }
-
 
 tasks.register('javadocJar', Jar) {
     dependsOn 'javadoc'
@@ -42,51 +39,60 @@ dependencyManagement {
     }
 }
 
-
-
-
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        create('mavenJava', MavenPublication) {
             from components.java
+            artifact javadocJar
+            artifact sourcesJar
 
-            // Attach the custom pom.xml to the publication
             pom {
-                withXml {
-                    asNode().appendNode('name', 'jda4spring')
-                    asNode().appendNode('description', 'A spring boot integration for the JDA Java Discord Api')
-                    asNode().appendNode('url', 'https://github.com/norbjert/JDA4Spring')
-                    asNode().appendNode('licenses').appendNode('license').appendNode('name', 'Apache-2.0')
-                            .appendNode('url', 'https://www.apache.org/licenses/LICENSE-2.0.html')
-                    // Add other metadata as needed
+                name = 'JDA4Spring'
+                description = 'A spring boot integration for the JDA library'
+                url = 'https://github.com/norbjert/JDA4Spring'
+
+                licenses {
+                    license {
+                        name = 'Apache-2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.html'
+                    }
                 }
-                // Add other metadata as needed
+
+                developers {
+                    developer {
+                        name = 'norbjert'
+                        email = 'norbert88@protonmail.com'
+                        organization = 'norbjert'
+                        organizationUrl = 'https://www.norbjert.xyz'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/norbjert/JDA4Spring.git'
+                    developerConnection = 'scm:git:ssh://github.com:norbjert/JDA4Spring.git'
+                    url = 'https://github.com/norbjert/JDA4Spring/tree/master'
+                }
             }
-
-            // Attach additional artifacts
-
         }
     }
     repositories {
-        // Configure your repository settings here
+        maven {
+            name = 'MavenCentral'
+            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
+                password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
+            }
+        }
     }
 }
 
-
 repositories {
-    maven {
-        name = 'MavenCentral'
-        url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-        credentials {
-            username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
-            password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
-        }
-    }
     mavenCentral()
 }
 
 dependencies {
-    //implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter'
     api 'org.springframework.boot:spring-boot-starter-web'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

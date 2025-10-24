@@ -14,6 +14,7 @@ if [[ -z "${jda_version}" ]]; then
   exit 1
 fi
 
+
 echo "Building jda4spring version ${build_version} (JDA ${jda_version})"
 
 ./gradlew clean assemble
@@ -52,14 +53,14 @@ echo '<project xmlns="http://maven.apache.org/POM/4.0.0"
       <name>norbjert</name>
       <email>norbert88@protonmail.com</email>
       <organization>norbjert</organization>
-      <organizationUrl>http://www.norbjert.xyz</organizationUrl>
+      <organizationUrl>https://www.norbjert.xyz</organizationUrl>
     </developer>
   </developers>
 
   <scm>
     <connection>scm:git:git://github.com/norbjert/JDA4Spring.git</connection>
     <developerConnection>scm:git:ssh://github.com:norbjert/JDA4Spring.git</developerConnection>
-    <url>http://github.com/norbjert/JDA4Spring/tree/master</url>
+    <url>https://github.com/norbjert/JDA4Spring/tree/master</url>
   </scm>
 
   <dependencies>
