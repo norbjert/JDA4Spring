@@ -23,6 +23,7 @@ public @interface OnChatMessage {
      * - If non-empty, the method is invoked only if the message content contains this substring.
      * - Comparison respects {@link #ignoreCase()} (IDs are unaffected).
      * Default: "" (no content filter).
+     * @return the substring filter
      */
     String ifMsgContains() default "";
 
@@ -31,6 +32,7 @@ public @interface OnChatMessage {
      * - If non-empty, the method is invoked only for messages from a server whose name matches exactly.
      * - Comparison respects {@link #ignoreCase()}.
      * Default: "" (no server-name filter).
+     * @return the server name filter
      */
     String onServerViaServerName() default "";
 
@@ -39,6 +41,7 @@ public @interface OnChatMessage {
      * - If non-empty, the method is invoked only for messages from the server with this exact ID.
      * - a Case-insensitive flag does not apply to IDs.
      * Default: "" (no server-ID filter).
+     * @return the server ID filter
      */
     String onServerViaServerId() default "";
 
@@ -47,6 +50,7 @@ public @interface OnChatMessage {
      * - If non-empty, the method is invoked only for messages from a channel whose name matches exactly.
      * - Comparison respects {@link #ignoreCase()}.
      * Default: "" (no channel-name filter).
+     * @return the channel name filter
      */
     String inChannelViaChannelName() default "";
 
@@ -55,6 +59,7 @@ public @interface OnChatMessage {
      * - If non-empty, the method is invoked only for messages from the channel with this exact ID.
      * - a Case-insensitive flag does not apply to IDs.
      * Default: "" (no channel-ID filter).
+     * @return the channel ID filter
      */
     String inChannelViaChannelId() default "";
 
@@ -63,6 +68,7 @@ public @interface OnChatMessage {
      * - true: skip messages from bots
      * - false: process messages from both humans and bots
      * Default: false.
+     * @return whether to ignore bot users
      */
     boolean ignoreBots() default false;
 
@@ -71,6 +77,7 @@ public @interface OnChatMessage {
      * Applies to {@link #ifMsgContains()}, {@link #onServerViaServerName()}, and {@link #inChannelViaChannelName()}.
      * Does not affect ID-based filters.
      * Default: true.
+     * @return whether to ignore upper/lower case
      */
     boolean ignoreCase() default true;
 
