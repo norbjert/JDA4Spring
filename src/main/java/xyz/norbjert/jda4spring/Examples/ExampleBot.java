@@ -75,12 +75,12 @@ public class ExampleBot {
 
 
     @Button("hello")
-    public void helloButton(ButtonInteractionEvent event) {
+    void helloButton(ButtonInteractionEvent event) {
         event.reply("Hello :D").setEphemeral(true).queue();
     }
 
     @Button("delete545435")
-    public void deleteMessageButton(ButtonInteractionEvent event) {
+    void deleteMessageButton(ButtonInteractionEvent event) {
         event.getMessage().delete().queue();
         event.reply("Message deleted").setEphemeral(true).queue();
     }

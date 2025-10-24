@@ -14,6 +14,14 @@ public class ButtonInteractionInvoker {
 
     private static final Logger logger = LoggerFactory.getLogger(ButtonInteractionInvoker.class);
 
+    /**
+     * Invokes the given {@code annotatedMethod} on the {@code declaringClass}
+     * @param annotatedMethod the method to invoke
+     * @param declaringClass the class on which the method should be invoked
+     * @param event the event that triggered the method invocation
+     * @throws InvocationTargetException if the method invocation fails
+     * @throws IllegalAccessException if the method cannot be accessed
+     */
     public static void invokeButtonInteractionMethod(Method annotatedMethod, Object declaringClass, ButtonInteractionEvent event) throws InvocationTargetException, IllegalAccessException {
 
             switch (annotatedMethod.getParameterCount()) {
