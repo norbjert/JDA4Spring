@@ -1,15 +1,11 @@
 package xyz.norbjert.jda4spring.Examples;
 
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import xyz.norbjert.jda4spring.annotations.BotTask;
 import xyz.norbjert.jda4spring.annotations.Button;
 import xyz.norbjert.jda4spring.annotations.OnChatMessage;
 import xyz.norbjert.jda4spring.annotations.SlashCommand;
@@ -17,7 +13,6 @@ import xyz.norbjert.jda4spring.annotations.SlashCommand;
 import javax.swing.*;
 import java.awt.*;
 import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * a simple example on how to use jda4spring
@@ -67,9 +62,10 @@ public class ExampleBot {
                 .build();
 
         event.replyEmbeds(eb)
-                .addActionRow(
-                        net.dv8tion.jda.api.interactions.components.buttons.Button.primary("hello", "say hello ;)"),
-                        net.dv8tion.jda.api.interactions.components.buttons.Button.danger("delete545435", "delete"))
+                .addComponents(
+                        ActionRow.of(
+                        net.dv8tion.jda.api.components.buttons.Button.primary("hello", "say hello ;)"),
+                        net.dv8tion.jda.api.components.buttons.Button.danger("delete545435", "delete")))
                 .queue();
     }
 
