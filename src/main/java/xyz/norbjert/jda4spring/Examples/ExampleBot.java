@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import xyz.norbjert.jda4spring.annotations.BotTask;
 import xyz.norbjert.jda4spring.annotations.Button;
 import xyz.norbjert.jda4spring.annotations.OnChatMessage;
 import xyz.norbjert.jda4spring.annotations.SlashCommand;
@@ -17,7 +18,7 @@ import java.time.Instant;
 /**
  * a simple example on how to use jda4spring
  */
-//@BotTask("ExampleBot")
+@BotTask("ExampleBot")
 public class ExampleBot {
 
     /**
