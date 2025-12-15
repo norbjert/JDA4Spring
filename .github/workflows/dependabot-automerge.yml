@@ -38,8 +38,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           running-workflow-name: "Auto-merge Dependabot PRs"
-          # Only the build job needs to be successful
-          check-name: "build"
+          check-name: "compile"
           allowed-conclusions: success
           # Avoid waiting on this workflow itself
           ignore-checks: |

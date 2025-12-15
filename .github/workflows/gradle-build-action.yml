@@ -58,7 +58,7 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Run tests
-        run: ./gradlew test --rerun-tasks
+        run: ./gradlew test
 
       - name: Upload Test Report
         if: always()
