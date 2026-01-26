@@ -46,17 +46,10 @@ jobs:
             Auto-merge Dependabot PRs
             Auto-merge Dependabot PRs / automerge
 
-      - name: Debug token
-        run: |
-          if [ -z "${{ secrets.GH_PAT }}" ]; then
-            echo "GH_PAT is empty or not set"
-          else
-            echo "GH_PAT is set"
-          fi
-
       - name: Approve PR (if reviews are required)
         uses: hmarr/auto-approve-action@v3
         with:
+          github-token: ${{ secrets.GH_PAT }}  # Add this line
           pull-request-number: ${{ github.event.pull_request.number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
