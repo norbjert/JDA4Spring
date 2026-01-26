@@ -49,6 +49,7 @@ jobs:
       - name: Approve PR (if reviews are required)
         uses: hmarr/auto-approve-action@v3
         with:
+          github-token: ${{ secrets.GH_PAT }}  # Add this line
           pull-request-number: ${{ github.event.pull_request.number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
@@ -91,14 +92,6 @@ jobs:
             } catch (e) {
               core.setFailed('Direct merge failed: ' + (e && e.message ? e.message : String(e)));
             }
-
-      - name: Debug token
-        run: |
-          if [ -z "${{ secrets.GH_PAT }}" ]; then
-            echo "GH_PAT is empty or not set"
-          else
-            echo "GH_PAT is set"
-          fi
 
       - name: Print diagnostics if merge still blocked
         if: failure()
