@@ -1,8 +1,7 @@
 name: Auto-merge Dependabot PRs
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_target
 
 permissions:
   contents: write
@@ -16,6 +15,7 @@ concurrency:
 
 env:
   MERGE_METHOD: squash
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   automerge:
@@ -29,16 +29,31 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
-          github-token: ${{ secrets.GH_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Wait for Gradle CI check only
+      - name: Wait for Gradle compile check
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          repo-token: ${{ secrets.GH_PAT }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           running-workflow-name: "Auto-merge Dependabot PRs"
           check-name: "compile"
+          allowed-conclusions: success
+          # Avoid waiting on this workflow itself
+          ignore-checks: |
+            automerge
+            Auto-merge Dependabot PRs
+            Auto-merge Dependabot PRs / automerge
+
+      - name: Wait for Gradle test check
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          running-workflow-name: "Auto-merge Dependabot PRs"
+          check-name: "test"
           allowed-conclusions: success
           # Avoid waiting on this workflow itself
           ignore-checks: |
@@ -62,36 +77,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: ${{ env.MERGE_METHOD }}
-
-      - name: Fallback direct merge via API
-        if: steps.enable-automerge.outcome == 'failure'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GH_PAT }}
-          script: |
-            const pr = context.payload.pull_request;
-            const method = process.env.MERGE_METHOD || 'squash';
-            try {
-              const prInfo = await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pr.number
-              });
-              const state = prInfo.data.mergeable_state || 'unknown';
-              if (state && ['blocked', 'draft', 'dirty', 'unknown'].includes(state)) {
-                core.setFailed('PR not mergeable. mergeable_state=' + state);
-                return;
-              }
-              const res = await github.rest.pulls.merge({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pr.number,
-                merge_method: method
-              });
-              core.info('Merged PR #' + pr.number + ' with method=' + method + '. sha=' + res.data.sha);
-            } catch (e) {
-              core.setFailed('Direct merge failed: ' + (e && e.message ? e.message : String(e)));
-            }
 
       - name: Print diagnostics if merge still blocked
         if: failure()
