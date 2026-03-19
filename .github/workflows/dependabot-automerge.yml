@@ -62,7 +62,7 @@ jobs:
             Auto-merge Dependabot PRs / automerge
 
       - name: Approve PR (if reviews are required)
-        uses: hmarr/auto-approve-action@v3
+        uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.GH_PAT }}
           pull-request-number: ${{ github.event.pull_request.number }}
