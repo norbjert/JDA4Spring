@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     target-branch: "main"
     commit-message:
       prefix: "deps: "
@@ -13,12 +13,11 @@ updates:
     labels:
       - "dependencies"
 
-
-      #    ignore:
-      #      - dependency-name: "org.xxx.xxx"
-      #        versions: [">1.8.0"]
-      # Only merge if all tests pass
-      #    merge:
-      #      strategy: "auto"
-      # This ensures PRs are only merged if all required checks pass
-#      require-all-status-checks: true
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps: "
+    labels:
+      - "dependencies"

@@ -15,7 +15,7 @@ concurrency:
 
 env:
   MERGE_METHOD: squash
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #required bc of wait-on-check-action
 
 jobs:
   automerge:
@@ -38,7 +38,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           running-workflow-name: "Auto-merge Dependabot PRs"
-          check-name: "compile"
+          check-name: "gradle build / compile"
           allowed-conclusions: success
           # Avoid waiting on this workflow itself
           ignore-checks: |
@@ -53,7 +53,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           running-workflow-name: "Auto-merge Dependabot PRs"
-          check-name: "test"
+          check-name: "gradle build / test"
           allowed-conclusions: success
           # Avoid waiting on this workflow itself
           ignore-checks: |
