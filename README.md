@@ -12,7 +12,7 @@ Both this project and this readme are still actively being worked on, but here's
 ### Step 1: add the following line to your build.gradle to import the library:
 
 ```
-implementation 'xyz.norbjert:jda4spring:0.0.4'
+implementation 'xyz.norbjert:jda4spring:0.0.7'
 ```
 
 ### Step 2: Add the following configuration to your `application.properties`:
@@ -33,7 +33,7 @@ You can achieve this moving the configuration from Step 2 into a `jda4spring.con
 
 ```jda4spring.configFileLocation = src/main/resources/jda4spring.config```
 
-You can find an example for this setup [here](https://github.com/norbjert/JDA4Spring/tree/master/src/main/resources).
+You can find an example for this setup [here](https://github.com/norbjert/JDA4Spring/tree/main/src/main/resources).
 
 ### Step 3: add a new class with the `@BotTask("ExampleBot")` annotation. Make sure `ExampleBot` matches
 the task you have specified in your `application.properties` or `jda4spring.config` file, for example `bots.SomeConvenientName.tasks = ExampleBot`

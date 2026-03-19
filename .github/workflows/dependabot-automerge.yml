@@ -38,7 +38,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           running-workflow-name: "Auto-merge Dependabot PRs"
-          check-name: "gradle build / compile"
+          check-name: "compile"
           allowed-conclusions: success
           # Avoid waiting on this workflow itself
           ignore-checks: |
@@ -53,7 +53,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
           running-workflow-name: "Auto-merge Dependabot PRs"
-          check-name: "gradle build / test"
+          check-name: "test"
           allowed-conclusions: success
           # Avoid waiting on this workflow itself
           ignore-checks: |

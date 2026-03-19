@@ -1,4 +1,4 @@
-package xyz.norbjert.jda4spring.Examples;
+package xyz.norbjert.jda4spring.examples;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
