@@ -4,10 +4,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    assignees:
-      - "norbjert"
-    reviewers:
-      - "norbjert"
     target-branch: "main"
     commit-message:
       prefix: "deps: "
