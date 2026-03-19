@@ -60,7 +60,7 @@ echo '<project xmlns="http://maven.apache.org/POM/4.0.0"
   <scm>
     <connection>scm:git:git://github.com/norbjert/JDA4Spring.git</connection>
     <developerConnection>scm:git:ssh://github.com:norbjert/JDA4Spring.git</developerConnection>
-    <url>https://github.com/norbjert/JDA4Spring/tree/master</url>
+    <url>https://github.com/norbjert/JDA4Spring/tree/main</url>
   </scm>
 
   <dependencies>
@@ -76,8 +76,6 @@ echo '<project xmlns="http://maven.apache.org/POM/4.0.0"
 </project>
 ' >> ./xyz/norbjert/jda4spring/${build_version}/jda4spring-${build_version}.pom
 
-#gpg -ab /xyz/xyz/norbjert/jda4spring/$build_version/*
-
 for file in ./xyz/norbjert/jda4spring/${build_version}/*; do
   echo $file
   if [ -f "$file" ] && [[ ! "$file" =~ \.asc$ ]]; then
@@ -85,7 +83,7 @@ for file in ./xyz/norbjert/jda4spring/${build_version}/*; do
         sha1=$(sha1sum "$file" | awk '{print $1}')
         echo "$md5" >> "$file.md5"
         echo "$sha1" >> "$file.sha1"
-    gpg -ab "$file"
+    gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE:-}" -ab "$file"
   fi
 done
 
@@ -95,3 +93,22 @@ rm -f "$ZIP_NAME"
 zip -r "$ZIP_NAME" "xyz/norbjert/jda4spring/${build_version}"
 
 echo "Created bundle: $(pwd)/${ZIP_NAME}"
+
+# Upload to Maven Central Portal if token is provided
+if [[ -n "${CENTRAL_TOKEN:-}" ]]; then
+  echo "Uploading bundle to Maven Central Portal..."
+  http_status=$(curl -s -o /tmp/central_response.json -w "%{http_code}" \
+    --request POST \
+    --header "Authorization: Bearer ${CENTRAL_TOKEN}" \
+    --form "bundle=@${ZIP_NAME}" \
+    "https://central.sonatype.com/api/v1/publisher/upload?publishingType=AUTOMATIC")
+
+  if [[ "$http_status" == "201" ]]; then
+    echo "Bundle uploaded successfully!"
+    cat /tmp/central_response.json
+  else
+    echo "Upload failed with HTTP status: ${http_status}"
+    cat /tmp/central_response.json
+    exit 1
+  fi
+fi
