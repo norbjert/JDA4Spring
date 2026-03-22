@@ -107,7 +107,22 @@ dependencies {
     implementation 'net.dv8tion:JDA:6.3.2'
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-parameters'
+}
+
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'integration'
+    }
+    failOnNoDiscoveredTests = false
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests against a real Discord bot account.'
+    group = 'verification'
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
     failOnNoDiscoveredTests = false
 }
