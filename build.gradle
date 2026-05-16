@@ -117,9 +117,28 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('test') {
     useJUnitPlatform {
-        excludeTags 'integration'
+        excludeTags 'integration', 'e2e'
     }
     failOnNoDiscoveredTests = false
+
+    jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
+}
+
+tasks.register('e2eTest', Test) {
+    description = 'Runs end-to-end tests against real Discord bots on a test server.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'e2e'
+    }
+    failOnNoDiscoveredTests = false
+    // always re-run — results depend on external Discord state, not just source changes
+    outputs.upToDateWhen { false }
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
 
     jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
 }
@@ -127,6 +146,8 @@ tasks.named('test') {
 tasks.register('integrationTest', Test) {
     description = 'Runs integration tests against a real Discord bot account.'
     group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform {
         includeTags 'integration'
     }
