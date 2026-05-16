@@ -20,6 +20,7 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
+    mockitoAgent
 }
 
 tasks.register('javadocJar', Jar) {
@@ -103,6 +104,9 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
+    // Mockito java agent
+    mockitoAgent 'org.mockito:mockito-core:5.20.0'
+
     //discord api
     implementation 'net.dv8tion:JDA:6.4.1'
 }
@@ -116,6 +120,8 @@ tasks.named('test') {
         excludeTags 'integration'
     }
     failOnNoDiscoveredTests = false
+
+    jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
 }
 
 tasks.register('integrationTest', Test) {
@@ -125,4 +131,6 @@ tasks.register('integrationTest', Test) {
         includeTags 'integration'
     }
     failOnNoDiscoveredTests = false
+
+    jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
 }
