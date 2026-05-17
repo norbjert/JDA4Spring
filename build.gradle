@@ -152,6 +152,11 @@ tasks.register('integrationTest', Test) {
         includeTags 'integration'
     }
     failOnNoDiscoveredTests = false
+    outputs.upToDateWhen { false }
+
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
 
     jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
 }
