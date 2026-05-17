@@ -19,7 +19,6 @@ import xyz.norbjert.jda4spring.annotations.OnChatMessage;
 import xyz.norbjert.jda4spring.annotations.SlashCommand;
 
 import javax.security.auth.login.LoginException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
@@ -155,19 +154,8 @@ public class DiscordBot extends ListenerAdapter {
                     || (buttonMethod.getAnnotation(Button.class) != null &&
                             event.getComponentId().equals(buttonMethod.getAnnotation(Button.class).value()))) {
 
-                try {
-
-                    Object declaringInstance = getDeclaringInstance(buttonMethod);
-                    
-                    invokeButtonInteractionMethod(buttonMethod, declaringInstance, event);
-
-                } catch (InvocationTargetException ex) {
-                    logger.error("InvocationTargetException:" + ex.getMessage());
-                    throw new RuntimeException(ex);
-                } catch (IllegalAccessException ex) {
-                    logger.error("IllegalAccessException" + ex.getMessage());
-                    throw new RuntimeException(ex);
-                }
+                Object declaringInstance = getDeclaringInstance(buttonMethod);
+                invokeButtonInteractionMethod(buttonMethod, declaringInstance, event);
             }
         }
     }

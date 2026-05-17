@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,26 +44,28 @@ class ButtonInteractionInvokerTest {
     // -- Tests --
 
     @Test
-    void invokesNoArgMethod() throws InvocationTargetException, IllegalAccessException {
+    void invokesNoArgMethod() {
         Target target = new Target();
         ButtonInteractionInvoker.invokeButtonInteractionMethod(method("noArgs"), target, event);
         assertTrue(target.noArgCalled);
     }
 
     @Test
-    void injectsEventForSingleParamMethod() throws InvocationTargetException, IllegalAccessException {
+    void injectsEventForSingleParamMethod() {
         Target target = new Target();
         ButtonInteractionInvoker.invokeButtonInteractionMethod(method("withEvent"), target, event);
         assertSame(event, target.capturedEvent);
     }
 
     @Test
-    void invokesMultiParamMethodWithEvent() throws InvocationTargetException, IllegalAccessException {
-        // Default case: passes event as first argument, which causes IllegalArgumentException
-        // since the method signature expects (ButtonInteractionEvent, String) but only event is passed.
+    void invokesMultiParamMethodWithEvent() {
+        // Default case: passes event as first argument, which causes an argument mismatch since the
+        // method expects (ButtonInteractionEvent, String) but only event is passed.
         // This is a known limitation captured in the existing TODO in ButtonInteractionInvoker.
+        // MethodInvoker wraps the underlying IllegalArgumentException in a RuntimeException.
         Target target = new Target();
-        assertThrows(IllegalArgumentException.class,
+        RuntimeException ex = assertThrows(RuntimeException.class,
                 () -> ButtonInteractionInvoker.invokeButtonInteractionMethod(method("withEventAndExtra"), target, event));
+        assertInstanceOf(IllegalArgumentException.class, ex.getCause());
     }
 }
