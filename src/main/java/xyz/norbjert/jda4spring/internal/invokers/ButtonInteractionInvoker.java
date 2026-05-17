@@ -4,7 +4,6 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -19,23 +18,19 @@ public class ButtonInteractionInvoker {
      * @param annotatedMethod the method to invoke
      * @param declaringClass the class on which the method should be invoked
      * @param event the event that triggered the method invocation
-     * @throws InvocationTargetException if the method invocation fails
-     * @throws IllegalAccessException if the method cannot be accessed
      */
-    public static void invokeButtonInteractionMethod(Method annotatedMethod, Object declaringClass, ButtonInteractionEvent event) throws InvocationTargetException, IllegalAccessException {
-
+    public static void invokeButtonInteractionMethod(Method annotatedMethod, Object declaringClass, ButtonInteractionEvent event) {
             switch (annotatedMethod.getParameterCount()) {
-                case 0 -> annotatedMethod.invoke(declaringClass);
+                case 0 -> MethodInvoker.invoke(annotatedMethod, declaringClass);
                 case 1 -> {
                     if (annotatedMethod.getParameterTypes()[0].getTypeName().contains("ButtonInteractionEvent")) {
-                        annotatedMethod.invoke(declaringClass, event);
+                        MethodInvoker.invoke(annotatedMethod, declaringClass, event);
                     } else {
                         logger.error("ERROR INVOKING @Button or @ButtonHandler annotation");
                     }
                 }
-                default ->
-                    //ToDo: smart implementation that automatically maps correct variables to the method
-                        annotatedMethod.invoke(declaringClass, event);
+                //ToDo: smart implementation that automatically maps correct variables to the method
+                default -> MethodInvoker.invoke(annotatedMethod, declaringClass, event);
             }
     }
 }
