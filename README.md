@@ -1,116 +1,218 @@
 # JDA4Spring
 
-an integration of the [JDA discord API](https://github.com/discord-jda/JDA) for spring boot, with various quality of life improvements.
+A Spring Boot integration library for [JDA](https://github.com/discord-jda/JDA) (Java Discord API). Define Discord bot event handlers as annotated Spring components — no boilerplate listener setup required.
 
+## Requirements
 
-Both this project and this readme are still actively being worked on, but here's a simple getting started for now:
+- Java 17+
+- Spring Boot 3.x or 4.x
+- A Discord bot token ([Discord Developer Portal](https://discord.com/developers/applications))
 
-## Getting started:
+## Installation
 
-### Step 0: create a spring boot project if you haven't already
+Add the dependency to your `build.gradle`:
 
-### Step 1: add the following line to your build.gradle to import the library:
-
-```
+```groovy
 implementation 'xyz.norbjert:jda4spring:0.0.7'
 ```
 
-### Step 2: Add the following configuration to your `application.properties`:
+Or in `pom.xml`:
 
-```
-#Example setup
-###     Note: the name can be anything you want, and is only used to link the entries together. The bots account name can be a good option
-bots.SomeConvenientName.token = yourBotApiTokenHere
-bots.SomeConvenientName.tasks = Comma,Seperated,List,Of,Bot,Tasks  (aka what you name it in the @BotTask("xyz") annotation, see example below)
-###     Note: you can add .playing/.listening/.watching or .competing after the .activity to get the actual "Playing xyz" activities
-bots.SomeConvenientName.activity.playing = some custom activity text for your bot
-###     GatewayIntents you plan on using in your code, some common examples blow. For more info, see: https://jda.wiki/using-jda/gateway-intents-and-member-cache-policy/
-bots.SomeConvenientName.intents = GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+```xml
+<dependency>
+    <groupId>xyz.norbjert</groupId>
+    <artifactId>jda4spring</artifactId>
+    <version>0.0.7</version>
+</dependency>
 ```
 
-### Step 2.5 **(optional)**: For better security its recommended to keep your sensitive credentials in a seperate file. 
-You can achieve this moving the configuration from Step 2 into a `jda4spring.config` file and referencing its location in the `application.properties`:
+## Configuration
 
-```jda4spring.configFileLocation = src/main/resources/jda4spring.config```
+Bot configuration can go directly in `application.properties`, or in a dedicated external file — both use the same property format. The bot name (e.g. `MyBot`) is arbitrary and just links entries together.
 
-You can find an example for this setup [here](https://github.com/norbjert/JDA4Spring/tree/main/src/main/resources).
+### Option A: `application.properties`
 
-### Step 3: add a new class with the `@BotTask("ExampleBot")` annotation. Make sure `ExampleBot` matches
-the task you have specified in your `application.properties` or `jda4spring.config` file, for example `bots.SomeConvenientName.tasks = ExampleBot`
+```properties
+bots.MyBot.token=your-bot-token-here
+bots.MyBot.tasks=MyBotTask
 
-### Step 4: create a function with `@OnChatMessage` if you want it to respond to or process chat messages, or `@SlashCommand`
-if you want to add slash commands to your bot. Here's a little example:
+# Optional: set a visible activity status for the bot
+# Supported suffixes: .playing, .listening, .watching, .competing
+bots.MyBot.activity.playing=some activity text
 
-
+# Required gateway intents for your use case
+# See: https://jda.wiki/using-jda/gateway-intents-and-member-cache-policy/
+bots.MyBot.intents=GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
 ```
-@BotTask("ExampleBot")
-public class ExampleBot {
 
-    @SlashCommand(command = "ping", description = "Calculate ping of the bot")
-    public void ping(SlashCommandInteractionEvent event) {
+### Option B: external config file (recommended for credentials)
 
-        long time = System.currentTimeMillis();
-        event.reply("Pong!").setEphemeral(true) // reply or acknowledge
-                .flatMap(v ->
-                        event.getHook().editOriginalFormat("Pong: %d ms", System.currentTimeMillis() - time) // then edit original
-                ).queue(); // Queue both reply and edit
+Keep bot tokens out of your main properties file by placing them in a separate file (e.g. `src/main/resources/jda4spring.config`) and pointing to it from `application.properties`:
+
+```properties
+jda4spring.configfile=src/main/resources/jda4spring.config
+```
+
+The external file uses the same format as `application.properties`:
+
+```properties
+bots.MyBot.token=your-bot-token-here
+bots.MyBot.tasks=MyBotTask
+bots.MyBot.activity.playing=some activity text
+bots.MyBot.intents=GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+```
+
+Add the config file to `.gitignore` to avoid accidentally committing credentials.
+
+**Multiple bots** are supported by adding additional `bots.<name>.*` blocks with different names, in either configuration method.
+
+## Usage
+
+### Defining a bot task
+
+Annotate a Spring component with `@BotTask` using the same task name you listed in `bots.<name>.tasks`:
+
+```java
+@BotTask("MyBotTask")
+public class MyBot {
+    // event handler methods go here
+}
+```
+
+### Slash commands — `@SlashCommand`
+
+```java
+@SlashCommand(command = "ping", description = "Measure bot latency")
+public void ping(SlashCommandInteractionEvent event) {
+    long start = System.currentTimeMillis();
+    event.reply("Pong!")
+         .setEphemeral(true)
+         .flatMap(v -> event.getHook().editOriginalFormat("Pong: %d ms", System.currentTimeMillis() - start))
+         .queue();
+}
+```
+
+**With arguments** — use `@SlashCommandArg` inside the `options` array. Argument values are passed as a `List<String>` in declaration order:
+
+```java
+@SlashCommand(
+    command = "greet",
+    description = "Greet a user",
+    options = {
+        @SlashCommandArg(name = "username", description = "Name to greet"),
+        @SlashCommandArg(name = "greeting", description = "Custom greeting text", optionType = OptionType.STRING)
     }
-    
-    @OnChatMessage(ifMsgContains = "hello") //will only call method if the received message contained "hello"
-    public void hello(MessageReceivedEvent event){
+)
+public void greet(SlashCommandInteractionEvent event, List<String> args) {
+    event.reply(args.get(1) + ", " + args.get(0) + "!").queue();
+}
+```
+
+**Notes:**
+- The first parameter must always be `SlashCommandInteractionEvent`.
+- Command names must be lowercase.
+- Omitting `command` defaults to the method name.
+
+### Chat message events — `@OnChatMessage`
+
+Called whenever a chat message is received. All filters are optional and combine with logical AND.
+
+```java
+// Respond to any message containing "hello" (case-insensitive by default)
+@OnChatMessage(ifMsgContains = "hello")
+public void onHello(MessageReceivedEvent event) {
+    event.getChannel().sendMessage("Hi there!").queue();
+}
+
+// Respond to all messages in a specific channel, ignoring bots
+@OnChatMessage(inChannelViaChannelId = "123456789012345678", ignoreBots = true)
+public void onChannelMessage(MessageReceivedEvent event) {
+    System.out.println(event.getAuthor().getName() + ": " + event.getMessage().getContentRaw());
+}
+```
+
+| Attribute | Description | Default |
+|---|---|---|
+| `ifMsgContains` | Only trigger if the message contains this substring | `""` (no filter) |
+| `onServerViaServerName` | Only trigger for messages from a server with this exact name | `""` (no filter) |
+| `onServerViaServerId` | Only trigger for messages from a server with this ID | `""` (no filter) |
+| `inChannelViaChannelName` | Only trigger for messages in a channel with this exact name | `""` (no filter) |
+| `inChannelViaChannelId` | Only trigger for messages in a channel with this ID | `""` (no filter) |
+| `ignoreBots` | Skip messages from bot accounts | `false` |
+| `ignoreCase` | Case-insensitive string comparisons (does not affect ID filters) | `true` |
+
+### Button interactions — `@Button` and `@ButtonHandler`
+
+Use `@Button` to handle clicks on a specific button ID, or `@ButtonHandler` to handle all button interactions:
+
+```java
+// Handle a specific button by ID
+@Button("confirm-action")
+public void onConfirm(ButtonInteractionEvent event) {
+    event.reply("Confirmed!").setEphemeral(true).queue();
+}
+
+// Handle all button interactions
+@ButtonHandler
+public void onAnyButton(ButtonInteractionEvent event) {
+    System.out.println("Button clicked: " + event.getComponentId());
+}
+```
+
+### Full example
+
+```java
+@BotTask("MyBotTask")
+public class MyBot {
+
+    @SlashCommand(command = "ping", description = "Calculate bot latency")
+    public void ping(SlashCommandInteractionEvent event) {
+        long start = System.currentTimeMillis();
+        event.reply("Pong!")
+             .setEphemeral(true)
+             .flatMap(v -> event.getHook().editOriginalFormat("Pong: %d ms", System.currentTimeMillis() - start))
+             .queue();
+    }
+
+    @OnChatMessage(ifMsgContains = "hello", ignoreBots = true)
+    public void onHello(MessageReceivedEvent event) {
         event.getChannel().sendMessage("Hi there!").queue();
     }
-    
-    @OnChatMessage //will be called on any chat message the bot receives
-    public void onAllChatMessages(MessageReceivedEvent event){
-        System.out.println(event.getAuthor().getName() + " has sent: " + event.getMessage().getContentRaw());
+
+    @Button("some-button-id")
+    public void onButtonClick(ButtonInteractionEvent event) {
+        event.reply("Button clicked!").setEphemeral(true).queue();
     }
 }
 ```
 
+## Running tests
 
-### Step 5: Profit! That's all you need, enjoy your new discord bot!
+```bash
+# Unit tests
+./gradlew test
 
+# Integration tests (requires a configured bot token)
+./gradlew integrationTest
 
-If you need help with getting things set up right or have any questions or suggestions, feel free to join my discord:
-https://discord.gg/dJeKP7Nyup
+# End-to-end tests (requires live Discord bot accounts on a test server)
+./gradlew e2eTest
+```
 
+## Forcing a specific JDA version
 
+If JDA releases a new version before JDA4Spring is updated, you can override the bundled version:
 
+```groovy
+implementation 'net.dv8tion:JDA:6.x.x'
+```
 
---------------------------
+Note that breaking changes in JDA may require corresponding updates in JDA4Spring.
 
-### Forcing a different JDA version
+## License
 
-If JDA updates and JDA4Spring is not yet up to date you can add the following line to your build.gradle to force using a specific version of JDA. 
+[Apache-2.0](LICENSE)
 
-`implementation 'net.dv8tion:JDA:5.0.0-beta.${version}'`
-(replace ${version} with whatever version you want)
+## Support
 
-Keep in mind breaking changes from JDA would potentially break JDA4Spring.
-
---------------------------
---------------------------
---------------------------
---------------------------
---------------------------
---------------------------
-
-(anything below this are personal notes regarding this project)
-
-
-
-
-Notes for documentation:
--Button Events:
--@Button("id") requires ID, to be defined when defining a button in a message
--if you want to dynamically add and change buttons at runtime use a custom @ButtonManager and write the implementation yourself
-
-@Button("someID") works similar to @OnChatMessage("some msg"), while @ButtonManager represents the equivalent to @OnChatMessage without filter
-
-
-Notes and future todos for me:
--maybe make a specific @Scheduled for regularly occurring bot tasks?
--Implement ButtonEvents
--Maybe some fancy annotation-based way for slash command auto-completion? https://jda.wiki/using-jda/interactions/#slash-command-autocomplete
--Clean up the DiscordBot.java class, that thing is a mess and needs a smarter implementation (with less copy pasted code)
+Questions, issues, or suggestions? Open an issue on [GitHub](https://github.com/norbjert/JDA4Spring/issues) or join the [Discord server](https://discord.gg/dJeKP7Nyup).
