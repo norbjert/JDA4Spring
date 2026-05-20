@@ -76,14 +76,21 @@ echo '<project xmlns="http://maven.apache.org/POM/4.0.0"
 </project>
 ' >> ./xyz/norbjert/jda4spring/${build_version}/jda4spring-${build_version}.pom
 
+GPG_KEY_ID=$(gpg --list-secret-keys --with-colons 2>/dev/null | awk -F: '/^sec/{print $5}' | head -1)
+if [[ -z "$GPG_KEY_ID" ]]; then
+  echo "No GPG secret key found. Make sure GPG_PRIVATE_KEY is imported before running this script."
+  exit 1
+fi
+echo "Signing with key: ${GPG_KEY_ID}"
+
 for file in ./xyz/norbjert/jda4spring/${build_version}/*; do
   echo $file
   if [ -f "$file" ] && [[ ! "$file" =~ \.asc$ ]]; then
-        md5=$(md5sum "$file" | awk '{print $1}')
-        sha1=$(sha1sum "$file" | awk '{print $1}')
-        echo "$md5" >> "$file.md5"
-        echo "$sha1" >> "$file.sha1"
-    gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE:-}" -ab "$file"
+    md5=$(md5sum "$file" | awk '{print $1}')
+    sha1=$(sha1sum "$file" | awk '{print $1}')
+    echo "$md5" >> "$file.md5"
+    echo "$sha1" >> "$file.sha1"
+    gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE:-}" -u "${GPG_KEY_ID}" -ab "$file"
   fi
 done
 
