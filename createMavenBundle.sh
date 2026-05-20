@@ -94,9 +94,10 @@ zip -r "$ZIP_NAME" "xyz/norbjert/jda4spring/${build_version}"
 
 echo "Created bundle: $(pwd)/${ZIP_NAME}"
 
-# Upload to Maven Central Portal if token is provided
-if [[ -n "${CENTRAL_TOKEN:-}" ]]; then
+# Upload to Maven Central Portal if credentials are provided
+if [[ -n "${CENTRAL_USERNAME:-}" && -n "${CENTRAL_PASSWORD:-}" ]]; then
   echo "Uploading bundle to Maven Central Portal..."
+  CENTRAL_TOKEN=$(echo -n "${CENTRAL_USERNAME}:${CENTRAL_PASSWORD}" | base64 -w 0)
   http_status=$(curl -s -o /tmp/central_response.json -w "%{http_code}" \
     --request POST \
     --header "Authorization: Bearer ${CENTRAL_TOKEN}" \
