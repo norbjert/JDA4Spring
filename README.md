@@ -13,7 +13,7 @@ A Spring Boot integration library for [JDA](https://github.com/discord-jda/JDA) 
 Add the dependency to your `build.gradle`:
 
 ```groovy
-implementation 'xyz.norbjert:jda4spring:0.0.9'
+implementation 'xyz.norbjert:jda4spring:0.0.10'
 ```
 
 Or in `pom.xml`:
@@ -22,7 +22,7 @@ Or in `pom.xml`:
 <dependency>
     <groupId>xyz.norbjert</groupId>
     <artifactId>jda4spring</artifactId>
-    <version>0.0.9</version>
+    <version>0.0.10</version>
 </dependency>
 ```
 
