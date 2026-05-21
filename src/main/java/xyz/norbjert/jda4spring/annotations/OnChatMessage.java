@@ -10,6 +10,10 @@ import java.lang.annotation.*;
  * - All non-empty filters are combined with logical AND (all must match).
  * - Case sensitivity for string-based filters is controlled by {@link #ignoreCase()}.
  * - ID-based filters are not affected by case sensitivity.
+ *
+ * Supported method parameter types (in any order):
+ * - {@code MessageReceivedEvent event} — the raw JDA event
+ * - {@code String content} — the message text (display form, mentions resolved to names); parameter must be named exactly {@code content}
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

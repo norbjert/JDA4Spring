@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 /**
  * a slash command argument, that can be used as a sub-element of the @SlashCommand annotation
  */
-@Target({ElementType.METHOD})
+@Target({ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @SuppressWarnings("unused")
 public @interface SlashCommandArg {

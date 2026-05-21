@@ -15,54 +15,21 @@ import java.util.List;
 /**
  * scans a BotTask for all defined @SlashCommand and @OnChatMessage annotations
  */
-public class AnnotationProcessor
-        //extends SimpleReflectiveProcessor implements BeanPostProcessor
-{
-
+public class AnnotationProcessor{
 
     private static final Logger logger = LoggerFactory.getLogger(AnnotationProcessor.class);
 
     /**
-     * static class, don't instantiate it pls thank you
+     * static class, don't instantiate it
      */
     private AnnotationProcessor(){
         logger.error("static class, not to be instanced");
         throw new RuntimeException("AnnotationProcessor is a static class and cannot be instanced");
     }
 
-    //private static final List<Method> slashMethods = new ArrayList<>();
-
-    /*@Override
-    public void registerReflectionHints(@NotNull ReflectionHints hints, @NotNull AnnotatedElement element) {
-
-        if (element.isAnnotationPresent(SlashCommand.class) && element instanceof Method method) {
-            slashMethods.add(method);
-            logger.info("added:"+method.getName());
-        }
-        logger.info("hi");
-        super.registerReflectionHints(hints, element);
-
-    }*/
-
-
-    //uncommented way to get method list mapped to the object who they belong to
-    //public static /*Map<Object,*/List<Method>/*>*/ getSlashCommandMethods(List<Object> botTasks) {
-
-        /*return botTasks.stream()
-                .collect(Collectors
-                        .toMap(Function.identity(),
-                                t -> slashMethods.stream()
-                                .filter(m -> m.getDeclaringClass().equals(t.getClass())).toList()));*/
-/*
-        return botTasks.stream().map(t -> slashMethods.stream()
-                        .filter(m -> m.getDeclaringClass().equals(t.getClass())).toList())
-                .flatMap(Collection::stream)
-                .toList();
-    }
-*/
 
     /**
-     * internal helper method for initialisation of the DiscordBot instance
+     * internal helper method for initialization of the DiscordBot instance
      * @param botTasks the tasks that are to be scanned for @SlashCommand Annotation
      * @return a list with all methods that have the @SlashCommand Annotation
      */
@@ -85,7 +52,7 @@ public class AnnotationProcessor
 
 
     /**
-     * internal helper method for initialisation of the DiscordBot instance
+     * internal helper method for initialization of the DiscordBot instance
      * @param botTasks the tasks that are to be scanned for @OnChatMessage Annotation
      * @return a list with all methods that have the @OnChatMessage Annotation
      */
@@ -108,7 +75,7 @@ public class AnnotationProcessor
 
 
     /**
-     * internal helper method for initialisation of the DiscordBot instance
+     * internal helper method for initialization of the DiscordBot instance
      * @param botTasks the tasks that are to be scanned for @Button or @ButtonHandler Annotation
      * @return a list with all methods that have the @Button or @ButtonHandler Annotation
      */

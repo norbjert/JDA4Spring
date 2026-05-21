@@ -63,7 +63,7 @@ public class SlashCommandDataFactory {
         if (slashMethod.getAnnotation(SlashCommand.class).description().length() > 100) {
             logger.info("Discord does not allow for descriptions longer than 100 characters, please change the description of {} to be shorter",
                     slashMethod.getAnnotation(SlashCommand.class).command());
-            return slashMethod.getAnnotation(SlashCommand.class).description().subSequence(0, 99).toString();
+            return slashMethod.getAnnotation(SlashCommand.class).description().subSequence(0, 100).toString();
         }
         return slashMethod.getAnnotation(SlashCommand.class).description();
     }

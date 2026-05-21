@@ -26,11 +26,14 @@ public class ButtonInteractionInvoker {
                     if (annotatedMethod.getParameterTypes()[0].getTypeName().contains("ButtonInteractionEvent")) {
                         MethodInvoker.invoke(annotatedMethod, declaringClass, event);
                     } else {
-                        logger.error("ERROR INVOKING @Button or @ButtonHandler annotation");
+                        logger.error("@Button/@ButtonHandler method '{}.{}' has an unsupported parameter type '{}'. Expected ButtonInteractionEvent.",
+                                annotatedMethod.getDeclaringClass().getSimpleName(), annotatedMethod.getName(),
+                                annotatedMethod.getParameterTypes()[0].getSimpleName());
                     }
                 }
-                //ToDo: smart implementation that automatically maps correct variables to the method
-                default -> MethodInvoker.invoke(annotatedMethod, declaringClass, event);
+                default -> logger.error("@Button/@ButtonHandler method '{}.{}' has {} parameters but only 0 or 1 (ButtonInteractionEvent) are supported.",
+                        annotatedMethod.getDeclaringClass().getSimpleName(), annotatedMethod.getName(),
+                        annotatedMethod.getParameterCount());
             }
     }
 }

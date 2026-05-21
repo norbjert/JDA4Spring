@@ -91,7 +91,7 @@ public class DiscordBot extends ListenerAdapter {
             //if the incoming slash command matches the command="xyz" variable of the @SlashCommand annotation
             if (event.getName().equalsIgnoreCase(slashMethod.getAnnotation(SlashCommand.class).command())
                     //if the incoming slash command matches the java method name, not recommended but works as a secondary option for lazy ppl
-                    || event.getName().equals(slashMethod.getName())) {
+                    || event.getName().equalsIgnoreCase(slashMethod.getName())) {
 
                 invokeSlashMethod(slashMethod, getDeclaringInstance(slashMethod), event);
                 return;
@@ -167,17 +167,14 @@ public class DiscordBot extends ListenerAdapter {
     //todo: consider configuring the logging via log levels
     private void logSlashCommandInteractions(SlashCommandInteractionEvent event){
         if (event.getGuild() == null) {
-            logger.info("Received: /" + event.getName()
-                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
-                    + " in channel: " + event.getChannel().getName()
-                    + " via direct message"
-                    + " from user: " + event.getUser().getName());
+            logger.info("Received: /{} {} in channel: {} via direct message from user: {}", event.getName(),
+                    event.getOptions().stream().map(OptionMapping::getAsString).toList(),
+                    event.getChannel().getName(), event.getUser().getName());
         } else {
-            logger.info("Received: /" + event.getName()
-                    + " " + event.getOptions().stream().map(OptionMapping::getAsString).toList()
-                    + " in channel: " + event.getChannel().getName()
-                    + " on server: " + Objects.requireNonNull(event.getGuild()).getName()
-                    + " from user: " + event.getUser().getName());
+            logger.info("Received: /{} {} in channel: {} on server: {} from user: {}", event.getName(),
+                    event.getOptions().stream().map(OptionMapping::getAsString).toList(),
+                    event.getChannel().getName(), Objects.requireNonNull(event.getGuild()).getName(),
+                    event.getUser().getName());
         }
     }
 

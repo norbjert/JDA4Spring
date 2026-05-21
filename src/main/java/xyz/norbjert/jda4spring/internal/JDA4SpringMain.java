@@ -80,6 +80,7 @@ public class JDA4SpringMain {
         this.appContext = appContext;
         this.environment = environment;
         this.botTaskBeans = appContext.getBeansWithAnnotation(BotTask.class);
+        bots.clear();
 
         try {
             // Get consolidated bot config data from all sources
@@ -389,7 +390,6 @@ public class JDA4SpringMain {
         }
         if (foundInstances.isEmpty()) {
             logger.warn("Class {} requested JDA instance(s), but no associated JDA bot was found.", clazz.getName());
-            return null;
         }
         return foundInstances;
     }

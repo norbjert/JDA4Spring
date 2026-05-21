@@ -16,7 +16,7 @@ public class MethodInvoker {
 
     private MethodInvoker() {
         logger.error("static class, not to be instanced");
-        throw new RuntimeException("SlashCommandDataFactory is a static class and cannot be instanced");
+        throw new RuntimeException("MethodInvoker is a static class and cannot be instanced");
     }
 
     /**

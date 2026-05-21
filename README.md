@@ -144,6 +144,13 @@ public void onChannelMessage(MessageReceivedEvent event) {
 }
 ```
 
+**Method parameters** — you can declare any combination of these (order doesn't matter):
+
+| Parameter | Description |
+|---|---|
+| `MessageReceivedEvent event` | The raw JDA event |
+| `String content` | The message text with mentions resolved to display names. The parameter must be named exactly `content`. |
+
 | Attribute | Description | Default |
 |---|---|---|
 | `ifMsgContains` | Only trigger if the message contains this substring | `""` (no filter) |
