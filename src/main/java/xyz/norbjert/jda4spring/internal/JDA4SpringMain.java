@@ -8,27 +8,29 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.ConfigurableEnvironment; // Corrected import
+import org.springframework.context.annotation.PropertySources;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import xyz.norbjert.jda4spring.annotations.BotTask;
 
 import javax.security.auth.login.LoginException;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -39,11 +41,11 @@ import java.util.stream.Stream;
  * and an optional custom config file, then sets up JDA instances accordingly.
  */
 @Component
-@PropertySource(value = {
-        "classpath:jda4spring.properties",
-        "classpath:jda4spring.yml",
-        "classpath:jda4spring.yaml"
-}, ignoreResourceNotFound = true)
+@PropertySources({
+        @PropertySource(value = "classpath:jda4spring.properties", ignoreResourceNotFound = true),
+        @PropertySource(value = "classpath:jda4spring.yml", ignoreResourceNotFound = true, factory = YamlPropertySourceFactory.class),
+        @PropertySource(value = "classpath:jda4spring.yaml", ignoreResourceNotFound = true, factory = YamlPropertySourceFactory.class)
+})
 public class JDA4SpringMain {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ApplicationContext appContext;
@@ -161,56 +163,8 @@ public class JDA4SpringMain {
         });
 
         // 2. Load and override/supplement with properties from the external config file if specified
-        if (externalConfigFilePath != null && !externalConfigFilePath.trim().isEmpty()) {
-            InputStream externalInputStream = null;
-            try {
-                if (externalConfigFilePath.startsWith("classpath:")) {
-                    String resourceName = externalConfigFilePath.substring("classpath:".length());
-                    externalInputStream = JDA4SpringMain.class.getClassLoader().getResourceAsStream(resourceName);
-                    if (externalInputStream == null) {
-                        throw new FileNotFoundException("Classpath resource not found: " + resourceName);
-                    }
-                } else if (!externalConfigFilePath.contains("/") && !externalConfigFilePath.contains("\\")) {
-                    // It's a plain filename, try the classpath first
-                    externalInputStream = JDA4SpringMain.class.getClassLoader().getResourceAsStream(externalConfigFilePath);
-                    if (externalInputStream == null) {
-                        // If not found in classpath, try a file system in 'src/main/resources/' (dev environment)
-                        Path resourcesFilePath = Paths.get("src", "main", "resources", externalConfigFilePath);
-                        if (Files.exists(resourcesFilePath)) {
-                            externalInputStream = Files.newInputStream(resourcesFilePath);
-                        } else {
-                            // Finally, try in the current working directory
-                            Path currentDirPath = Paths.get(externalConfigFilePath);
-                            if (Files.exists(currentDirPath)) {
-                                externalInputStream = Files.newInputStream(currentDirPath);
-                            } else {
-                                throw new FileNotFoundException("Could not find external config file '" + externalConfigFilePath + "' in classpath, resources, or current directory.");
-                            }
-                        }
-                    }
-                } else {
-                    // Assume it's a direct file system path
-                    Path filePath = Paths.get(externalConfigFilePath);
-                    externalInputStream = Files.newInputStream(filePath);
-                }
-
-                parsePropertiesFromInputStream(externalInputStream, consolidatedRawProperties, discoveredBotNames);
-
-            } catch (FileNotFoundException e) {
-                logger.error("External config file not found: '{}'", externalConfigFilePath, e);
-                throw new RuntimeException("External config file not found: " + externalConfigFilePath, e);
-            } catch (IOException e) {
-                logger.error("Error reading external config file: '{}'", externalConfigFilePath, e);
-                throw new RuntimeException("Error reading external config file: " + externalConfigFilePath, e);
-            } finally {
-                if (externalInputStream != null) {
-                    try {
-                        externalInputStream.close();
-                    } catch (IOException e) {
-                        logger.warn("Error closing input stream for external config file: {}", externalConfigFilePath, e);
-                    }
-                }
-            }
+        if (externalConfigFilePath != null && !externalConfigFilePath.isBlank()) {
+            loadExternalConfig(externalConfigFilePath.trim(), consolidatedRawProperties, discoveredBotNames);
         }
 
         // 3. Convert consolidated raw properties into BotConfigDataMapper objects
@@ -239,15 +193,53 @@ public class JDA4SpringMain {
         return result;
     }
 
+    private void loadExternalConfig(String path, Map<String, String> targetMap, Set<String> botNames) {
+        Resource resource = path.startsWith("classpath:")
+                ? new ClassPathResource(path.substring("classpath:".length()))
+                : new FileSystemResource(path);
+
+        if (!resource.exists()) {
+            logger.error("External config file not found: '{}'", path);
+            throw new RuntimeException("External config file not found: " + path);
+        }
+
+        try {
+            if (path.endsWith(".yml") || path.endsWith(".yaml")) {
+                parseYamlResource(resource, targetMap, botNames);
+            } else {
+                try (InputStream is = resource.getInputStream()) {
+                    parsePropertiesFromInputStream(is, targetMap, botNames);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error reading external config file: '{}'", path, e);
+            throw new RuntimeException("Error reading external config file: " + path, e);
+        }
+    }
+
+    private void parseYamlResource(Resource resource, Map<String, String> targetMap, Set<String> botNames) {
+        YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
+        yaml.setResources(resource);
+        Properties props = yaml.getObject();
+        if (props == null) return;
+        for (String key : props.stringPropertyNames()) {
+            if (key.startsWith("bots.")) {
+                String value = props.getProperty(key);
+                if (value != null) {
+                    targetMap.put(key, environment.resolvePlaceholders(value).trim());
+                    String[] parts = key.split("\\.");
+                    if (parts.length >= 3) botNames.add(parts[1]);
+                }
+            }
+        }
+    }
+
     /**
-     * Parses key-value pairs from an {@link InputStream} into a target map
-     * and collects discovered bot names. It handles simple "key = value" format,
-     * line by line, and allows new entries to override existing ones in the map.
-     * Note: This simplified parser does not fully support complex YAML structures;
-     * it treats lines as simple key=value pairs.
+     * Parses key-value pairs from an {@link InputStream} into a target map.
+     * Handles simple "key = value" format, line by line.
      *
      * @param is The {@link InputStream} to read from.
-     * @param targetMap The map to populate with key-value pairs (key is "bots.name.type", value is "configValue").
+     * @param targetMap The map to populate.
      * @param botNames A set to collect discovered bot names.
      */
     private void parsePropertiesFromInputStream(InputStream is, Map<String, String> targetMap, Set<String> botNames) {
@@ -261,8 +253,7 @@ public class JDA4SpringMain {
                 if (eqIndex > 0) { // Check for a valid key-value pair
                     String key = line.substring(0, eqIndex).trim();
                     String value = line.substring(eqIndex + 1).trim();
-                    // Put into a map, allowing later sources to override earlier ones
-                    targetMap.put(key, value);
+                    targetMap.put(key, environment.resolvePlaceholders(value));
 
                     if (key.startsWith("bots.")) {
                         String[] parts = key.split("\\.");
