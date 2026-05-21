@@ -3,7 +3,7 @@ package xyz.norbjert.jda4spring.annotations;
 import java.lang.annotation.*;
 
 /**
- *  allows for the creation of embed buttons on a discord bot.
+ *  Allows for the creation of embed buttons on a discord bot.
  *  Buttons are currently experimental. If you want to implement the calling logic yourself,
  *  you can use the @ButtonHandler annotation.
  *  When creating a button in an embed, you are required to pass it an ID.
@@ -11,8 +11,6 @@ import java.lang.annotation.*;
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@SuppressWarnings("unused")
-//@Reflective(AnnotationProcessor.class)//Todo
 public @interface Button {
 
     /**

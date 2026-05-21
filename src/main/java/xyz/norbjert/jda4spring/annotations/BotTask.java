@@ -13,9 +13,7 @@ import java.lang.annotation.*;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-//@Documented
 @Component
-@SuppressWarnings("unused")
 public @interface BotTask {
 
     /**
@@ -25,7 +23,6 @@ public @interface BotTask {
      * @return a descriptive name for the bot task.
      */
     @AliasFor(annotation = Component.class)
-    @SuppressWarnings("unused")
     String value() default "";
 
 }

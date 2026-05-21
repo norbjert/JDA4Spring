@@ -8,11 +8,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * a slash command argument, that can be used as a sub-element of the @SlashCommand annotation
+ * a slash command argument that can be used as a sub-element of the @SlashCommand annotation
  */
 @Target({ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@SuppressWarnings("unused")
 public @interface SlashCommandArg {
 
     /**
@@ -28,8 +27,8 @@ public @interface SlashCommandArg {
     String name();
 
     /**
-     *  a short description of the option and what its for
-     * @return a short description of the option and what its for
+     *  a short description of the option and what it's for
+     * @return a short description of the option and what it's for
      */
     String description();
 

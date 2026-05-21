@@ -10,7 +10,7 @@ import java.lang.annotation.*;
  * - All non-empty filters are combined with logical AND (all must match).
  * - Case sensitivity for string-based filters is controlled by {@link #ignoreCase()}.
  * - ID-based filters are not affected by case sensitivity.
- *
+ * <p>
  * Supported method parameter types (in any order):
  * - {@code MessageReceivedEvent event} — the raw JDA event
  * - {@code String content} — the message text (display form, mentions resolved to names); parameter must be named exactly {@code content}
@@ -18,8 +18,6 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-//@Reflective(AnnotationProcessor.class)//Todo
-@SuppressWarnings("unused")
 public @interface OnChatMessage {
 
     /**
@@ -43,7 +41,7 @@ public @interface OnChatMessage {
     /**
      * Server (guild) ID filter.
      * - If non-empty, the method is invoked only for messages from the server with this exact ID.
-     * - a Case-insensitive flag does not apply to IDs.
+     * - A Case-insensitive flag does not apply to IDs.
      * Default: "" (no server-ID filter).
      * @return the server ID filter
      */
@@ -61,7 +59,7 @@ public @interface OnChatMessage {
     /**
      * Channel ID filter.
      * - If non-empty, the method is invoked only for messages from the channel with this exact ID.
-     * - a Case-insensitive flag does not apply to IDs.
+     * - A Case-insensitive flag does not apply to IDs.
      * Default: "" (no channel-ID filter).
      * @return the channel ID filter
      */
@@ -69,8 +67,8 @@ public @interface OnChatMessage {
 
     /**
      * Whether to ignore messages authored by bot users.
-     * - true: skip messages from bots
-     * - false: process messages from both humans and bots
+     * - True: skip messages from bots
+     * - False: process messages from both humans and bots
      * Default: false.
      * @return whether to ignore bot users
      */

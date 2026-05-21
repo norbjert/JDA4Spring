@@ -29,8 +29,6 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-//@Reflective(AnnotationProcessor.class)//todo
-@SuppressWarnings("unused")
 public @interface SlashCommand {
 
     /**
