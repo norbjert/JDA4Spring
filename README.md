@@ -44,6 +44,8 @@ bots.MyBot.intents=GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
 
 **Multiple bots** are supported by adding additional `bots.<name>.*` blocks with different names.
 
+Fully annotated examples covering all options are in [`examples/`](examples/).
+
 ### Where to put the config
 
 **`application.properties` or `application.yml`** — the standard Spring Boot config file. Works out of the box.
@@ -55,7 +57,8 @@ bots.MyBot.intents=GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
 ```properties
 # Filesystem path (relative to working directory, or absolute)
 jda4spring.configfile=secrets/bots.properties
-
+```
+```
 # Or a classpath resource
 jda4spring.configfile=classpath:bots.yml
 ```

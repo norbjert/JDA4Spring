@@ -11,7 +11,6 @@ import xyz.norbjert.jda4spring.annotations.Button;
 import xyz.norbjert.jda4spring.annotations.OnChatMessage;
 import xyz.norbjert.jda4spring.annotations.SlashCommand;
 
-import javax.swing.*;
 import java.awt.*;
 import java.time.Instant;
 
@@ -54,7 +53,7 @@ public class ExampleBot {
     }
 
     @SlashCommand(command = "test-buttons", description = "create an embed with buttons to demo their functionality")
-    void testButtons(SlashCommandInteractionEvent event){
+    public void testButtons(SlashCommandInteractionEvent event){
 
         MessageEmbed eb = new EmbedBuilder()
                 .setColor(new Color(0, 200, 255))
@@ -72,12 +71,12 @@ public class ExampleBot {
 
 
     @Button("hello")
-    void helloButton(ButtonInteractionEvent event) {
+    public void helloButton(ButtonInteractionEvent event) {
         event.reply("Hello :D").setEphemeral(true).queue();
     }
 
     @Button("delete545435")
-    void deleteMessageButton(ButtonInteractionEvent event) {
+    public void deleteMessageButton(ButtonInteractionEvent event) {
         event.getMessage().delete().queue();
         event.reply("Message deleted").setEphemeral(true).queue();
     }

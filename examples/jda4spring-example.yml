@@ -1,0 +1,56 @@
+# ============================================================
+# JDA4Spring — example configuration (.yml format)
+# ============================================================
+#
+# This file can be used in three ways:
+#
+#   1. Rename to jda4spring.yml and place in src/main/resources/
+#      → loaded automatically by JDA4Spring
+#
+#   2. Add bots: entries directly to your application.yml
+#      → works out of the box, no extra file needed
+#
+#   3. Point to any file from application.properties:
+#        jda4spring.configfile=path/to/bots.yml
+#        jda4spring.configfile=classpath:bots.yml
+#
+# The bot name (e.g. "MyBot") is arbitrary — it links entries together.
+# Add the config file to .gitignore to keep tokens out of source control.
+# ============================================================
+
+bots:
+
+  # ── Single bot ─────────────────────────────────────────────
+  MyBot:
+    # Token from an environment variable (recommended)
+    token: ${DISCORD_BOT_TOKEN}
+
+    # Comma-separated list of @BotTask bean names to attach to this bot
+    tasks: MyBotTask
+
+    # Gateway intents — only request what your bot actually needs.
+    # See: https://jda.wiki/using-jda/gateway-intents-and-member-cache-policy/
+    intents: GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+
+    # Activity / status — pick one sub-key:
+    #   playing    →  "Playing some game"
+    #   listening  →  "Listening to a playlist"
+    #   watching   →  "Watching the logs"
+    #   competing  →  "Competing in a tournament"
+    # No sub-key = plain custom status (see commented example below).
+    activity:
+      playing: some game
+      #listening: a playlist
+      #watching: the logs
+      #competing: a tournament
+    #activity: custom status text
+
+  # ── Multiple bots ──────────────────────────────────────────
+  # Each bot has its own name, token, tasks, intents, and activity.
+
+  SecondBot:
+    token: ${DISCORD_BOT_TOKEN_2}
+    tasks: TaskA, TaskB
+    intents: GUILD_MESSAGES, MESSAGE_CONTENT
+    activity:
+      watching: two servers at once

@@ -58,14 +58,11 @@ class ButtonInteractionInvokerTest {
     }
 
     @Test
-    void invokesMultiParamMethodWithEvent() {
-        // Default case: passes event as first argument, which causes an argument mismatch since the
-        // method expects (ButtonInteractionEvent, String) but only event is passed.
-        // This is a known limitation captured in the existing TODO in ButtonInteractionInvoker.
-        // MethodInvoker wraps the underlying IllegalArgumentException in a RuntimeException.
+    void multiParamMethodLogsErrorAndDoesNotThrow() {
+        // Unsupported signature — invoker logs an error and skips invocation instead of crashing.
         Target target = new Target();
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        assertDoesNotThrow(
                 () -> ButtonInteractionInvoker.invokeButtonInteractionMethod(method("withEventAndExtra"), target, event));
-        assertInstanceOf(IllegalArgumentException.class, ex.getCause());
+        assertNull(target.capturedEvent, "Method should not have been invoked");
     }
 }

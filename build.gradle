@@ -11,6 +11,12 @@ plugins {
 group = 'xyz.norbjert'
 version = '0.0.9'
 
+// Library project — the Spring Boot plugin is used only for dependency management.
+// Disable the fat jar; the plain library jar is the published artifact.
+bootJar {
+    enabled = false
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
