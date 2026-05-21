@@ -28,56 +28,40 @@ Or in `pom.xml`:
 
 ## Configuration
 
-All bot properties follow the same format regardless of where you put them. The bot name (e.g. `MyBot`) is arbitrary and just links entries together.
+The bot name (e.g. `MyBot`) is arbitrary — it just links entries together. Tokens can be injected from environment variables using `${ENV_VAR}`.
 
-```properties
-bots.MyBot.token=your-bot-token-here
-bots.MyBot.tasks=MyBotTask
-
-# Optional: visible activity status. Supported suffixes: .playing, .listening, .watching, .competing
-bots.MyBot.activity.playing=some activity text
-
-# Required gateway intents for your use case
-# See: https://jda.wiki/using-jda/gateway-intents-and-member-cache-policy/
-bots.MyBot.intents=GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+```yaml
+bots:
+  MyBot:
+    token: ${DISCORD_BOT_TOKEN}
+    tasks: MyBotTask
+    intents: GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+    activity:
+      playing: some activity text  # suffixes: playing, listening, watching, competing
 ```
 
-**Multiple bots** are supported by adding additional `bots.<name>.*` blocks with different names.
+Or in `.properties` format:
+
+```properties
+bots.MyBot.token=${DISCORD_BOT_TOKEN}
+bots.MyBot.tasks=MyBotTask
+bots.MyBot.intents=GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+bots.MyBot.activity.playing=some activity text
+```
+
+**Multiple bots** are supported by adding additional named blocks under `bots:`.
 
 Fully annotated examples covering all options are in [`examples/`](examples/).
 
 ### Where to put the config
 
-**`application.properties` or `application.yml`** — the standard Spring Boot config file. Works out of the box.
-
-**`jda4spring.properties`, `jda4spring.yml`, or `jda4spring.yaml`** — drop one of these in `src/main/resources/` and JDA4Spring picks it up automatically. Useful for keeping bot config separate from your main application config.
-
-**External file** (recommended for keeping tokens out of source control) — point to any `.properties` or `.yml`/`.yaml` file using `jda4spring.configfile` in `application.properties`:
+- **`application.yml` / `application.properties`** — your existing Spring Boot config file, works out of the box
+- **`jda4spring.yml` / `jda4spring.properties`** — a dedicated file in `src/main/resources/`, picked up automatically
+- **External file** — any `.yml` or `.properties` file pointed to by `jda4spring.configfile` in `application.properties`:
 
 ```properties
-# Filesystem path (relative to working directory, or absolute)
-jda4spring.configfile=secrets/bots.properties
-```
-```
-# Or a classpath resource
-jda4spring.configfile=classpath:bots.yml
-```
-
-External file in `.properties` format:
-```properties
-bots.MyBot.token=your-bot-token-here
-bots.MyBot.tasks=MyBotTask
-```
-
-External file in `.yml` format:
-```yaml
-bots:
-  MyBot:
-    token: ${DISCORD_BOT_TOKEN}   # resolved from environment variable
-    tasks: MyBotTask
-    activity:
-      playing: some activity text
-    intents: GUILD_MESSAGES, DIRECT_MESSAGES, MESSAGE_CONTENT
+jda4spring.configfile=secrets/bots.yml          # filesystem path (relative or absolute)
+jda4spring.configfile=classpath:bots.properties  # classpath resource
 ```
 
 Add the file to `.gitignore` to avoid accidentally committing credentials.
