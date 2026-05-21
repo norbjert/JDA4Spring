@@ -23,7 +23,7 @@ cd ./build || exit
 OUT_DIR="xyz/norbjert/jda4spring/${build_version}"
 mkdir -p "${OUT_DIR}/"
 
-cp ./libs/jda4spring-${build_version}.jar "${OUT_DIR}/"
+cp ./libs/jda4spring-${build_version}-plain.jar "${OUT_DIR}/jda4spring-${build_version}.jar"
 cp ./libs/jda4spring-${build_version}-javadoc.jar "${OUT_DIR}/"
 cp ./libs/jda4spring-${build_version}-sources.jar "${OUT_DIR}/"
 
