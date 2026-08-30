@@ -4,8 +4,6 @@ plugins {
     id 'java-library'
     id 'org.springframework.boot' version '4.1.1'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'maven-publish'
-    id 'signing'
 }
 
 group = 'xyz.norbjert'
@@ -20,82 +18,17 @@ bootJar {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+    withJavadocJar()
+    withSourcesJar()
 }
 
 configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
     mockitoAgent
-}
-
-tasks.register('javadocJar', Jar) {
-    dependsOn 'javadoc'
-    from javadoc.destinationDir
-    archiveClassifier.set('javadoc')
-}
-
-tasks.register('sourcesJar', Jar) {
-    dependsOn 'classes'
-    archiveClassifier.set('sources')
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives javadocJar, sourcesJar
 }
 
 dependencyManagement {
     imports {
         mavenBom SpringBootPlugin.BOM_COORDINATES
-    }
-}
-
-publishing {
-    publications {
-        create('mavenJava', MavenPublication) {
-            from components.java
-            artifact javadocJar
-            artifact sourcesJar
-
-            pom {
-                name = 'JDA4Spring'
-                description = 'A spring boot integration for the JDA library'
-                url = 'https://github.com/norbjert/JDA4Spring'
-
-                licenses {
-                    license {
-                        name = 'Apache-2.0'
-                        url = 'https://www.apache.org/licenses/LICENSE-2.0.html'
-                    }
-                }
-
-                developers {
-                    developer {
-                        name = 'norbjert'
-                        email = 'norbert88@protonmail.com'
-                        organization = 'norbjert'
-                        organizationUrl = 'https://www.norbjert.xyz'
-                    }
-                }
-
-                scm {
-                    connection = 'scm:git:git://github.com/norbjert/JDA4Spring.git'
-                    developerConnection = 'scm:git:ssh://github.com:norbjert/JDA4Spring.git'
-                    url = 'https://github.com/norbjert/JDA4Spring/tree/main'
-                }
-            }
-        }
-    }
-    repositories {
-        maven {
-            name = 'MavenCentral'
-            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-            credentials {
-                username = project.findProperty("ossrhUsername") ?: System.getenv("OSSRH_USERNAME")
-                password = project.findProperty("ossrhPassword") ?: System.getenv("OSSRH_PASSWORD")
-            }
-        }
     }
 }
 
@@ -105,9 +38,6 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // Mockito java agent
@@ -130,39 +60,24 @@ tasks.named('test') {
     jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
 }
 
-tasks.register('e2eTest', Test) {
-    description = 'Runs end-to-end tests against real Discord bots on a test server.'
-    group = 'verification'
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath
-    useJUnitPlatform {
-        includeTags 'e2e'
+// Tests that talk to real Discord. Not part of `check` — run them explicitly.
+['e2e', 'integration'].each { tag ->
+    tasks.register("${tag}Test", Test) {
+        description = "Runs ${tag} tests against a real Discord bot account."
+        group = 'verification'
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+        useJUnitPlatform {
+            includeTags tag
+        }
+        failOnNoDiscoveredTests = false
+        // always re-run — results depend on external Discord state, not just source changes
+        outputs.upToDateWhen { false }
+
+        testLogging {
+            events 'passed', 'skipped', 'failed'
+        }
+
+        jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
     }
-    failOnNoDiscoveredTests = false
-    // always re-run — results depend on external Discord state, not just source changes
-    outputs.upToDateWhen { false }
-
-    testLogging {
-        events 'passed', 'skipped', 'failed'
-    }
-
-    jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
-}
-
-tasks.register('integrationTest', Test) {
-    description = 'Runs integration tests against a real Discord bot account.'
-    group = 'verification'
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath
-    useJUnitPlatform {
-        includeTags 'integration'
-    }
-    failOnNoDiscoveredTests = false
-    outputs.upToDateWhen { false }
-
-    testLogging {
-        events 'passed', 'skipped', 'failed'
-    }
-
-    jvmArgs "-javaagent:${configurations.mockitoAgent.files.find { it.name.contains('mockito-core') }.absolutePath}"
 }
