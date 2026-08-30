@@ -31,11 +31,14 @@ import java.lang.annotation.*;
 @Documented
 public @interface SlashCommand {
 
+    /** the {@link #command()} default, signalling that the (lower-cased) method name is used instead */
+    String USING_METHOD_NAME = "<using method name>";
+
     /**
-     *  a short description of the option and what it's for
-     * @return a short description of the option and what it's for
+     *  the name the command is invoked by, defaults to the (lower-cased) method name
+     * @return the name the command is invoked by
      */
-    String command() default "<using method name>";
+    String command() default USING_METHOD_NAME;
     /**
      *  a short description of the option and what it's for
      * @return a short description of the option and what it's for

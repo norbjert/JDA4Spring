@@ -1,10 +1,8 @@
 package xyz.norbjert.jda4spring.internal;
 
-import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,16 +21,11 @@ import xyz.norbjert.jda4spring.annotations.BotTask;
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -54,12 +47,9 @@ public class JDA4SpringMain {
     @Value("${jda4spring.configfile:#{null}}")
     private String externalConfigFilePath;
 
-    @Getter
     private static final List<DiscordBot> bots = new ArrayList<>();
-    @Getter
-    private final Map<String, Object> botTaskBeans;
-    @Getter
     private static JDA4SpringMain instance;
+    private final Map<String, Object> botTaskBeans;
 
     /**
      * Constructor for initializing JDA4Spring. This bean is responsible for:
@@ -72,7 +62,7 @@ public class JDA4SpringMain {
      */
     public JDA4SpringMain(
             ApplicationContext appContext,
-            ConfigurableEnvironment environment) { // Corrected type in constructor signature
+            ConfigurableEnvironment environment) {
 
         logger.info("JDA4Spring initialization started...");
 
@@ -83,37 +73,20 @@ public class JDA4SpringMain {
         bots.clear();
 
         try {
-            // Get consolidated bot config data from all sources
-            List<BotConfigProperty> botConfigData = getBotConfigData();
-
-            // Group configuration entries by bot name
-            Map<String, List<BotConfigProperty>> botsGroupedByName = new HashMap<>();
-            for (BotConfigProperty entry : botConfigData) {
-                botsGroupedByName.computeIfAbsent(entry.name(), k -> new ArrayList<>()).add(entry);
-            }
-
-            // Initialize each bot account
-            for (Map.Entry<String, List<BotConfigProperty>> entry : botsGroupedByName.entrySet()) {
+            for (Map.Entry<String, Map<String, String>> entry : getBotConfigs().entrySet()) {
                 String botName = entry.getKey();
-                List<BotConfigProperty> allEntriesForThisBot = entry.getValue();
+                Map<String, String> config = entry.getValue();
 
-                String apiToken = allEntriesForThisBot.stream()
-                        .filter(t -> "token".equals(t.type())) // Ensure an exact match for "token"
-                        .findFirst()
-                        .map(BotConfigProperty::value)
-                        .orElseThrow(() -> new IllegalArgumentException("API token not found for bot: '" + botName + "'"));
-
+                String apiToken = config.get("token");
+                if (apiToken == null) {
+                    throw new IllegalArgumentException("API token not found for bot: '" + botName + "'");
+                }
                 if (apiToken.trim().isEmpty()) {
                     logger.warn("API token for bot '{}' is empty. Skipping initialization for this bot.", botName);
                     continue;
                 }
 
-                List<Object> botTasks = getEventListenersForBotAsBotTasks(allEntriesForThisBot);
-                Activity activity = getActivity(allEntriesForThisBot);
-                List<GatewayIntent> gatewayIntents = getGatewayIntents(allEntriesForThisBot);
-
-                DiscordBot newDiscordBotAccountInstance = new DiscordBot(apiToken, botTasks, activity, gatewayIntents);
-                bots.add(newDiscordBotAccountInstance);
+                bots.add(new DiscordBot(apiToken, getBotTasks(config), getActivity(botName, config), getGatewayIntents(config)));
             }
 
         } catch (LoginException e) {
@@ -130,34 +103,45 @@ public class JDA4SpringMain {
     }
 
     /**
+     * @return the Discord bot accounts that were started from the discovered configuration
+     */
+    public static List<DiscordBot> getBots() {
+        return bots;
+    }
+
+    /**
+     * @return the most recently constructed {@code JDA4SpringMain} bean
+     */
+    public static JDA4SpringMain getInstance() {
+        return instance;
+    }
+
+    /**
+     * @return all beans annotated with {@link BotTask}, keyed by bean name
+     */
+    public Map<String, Object> getBotTaskBeans() {
+        return botTaskBeans;
+    }
+
+    /**
      * Consolidates bot configuration data from Spring's {@link ConfigurableEnvironment}
      * and an optional external configuration file. Properties from the external
      * file take precedence and override those from the environment if keys clash.
      *
-     * @return A list of {@link BotConfigProperty} representing all bot configurations.
+     * @return the configuration of each discovered bot, keyed by bot name, then by config type
      */
-    private List<BotConfigProperty> getBotConfigData() {
-        // Use LinkedHashMap to maintain insertion order if properties are defined in a specific order
-        Map<String, String> consolidatedRawProperties = new LinkedHashMap<>();
-        Set<String> discoveredBotNames = new HashSet<>();
+    private Map<String, Map<String, String>> getBotConfigs() {
+        // LinkedHashMap keeps the order the properties were defined in
+        Map<String, Map<String, String>> configs = new LinkedHashMap<>();
 
         // 1. Load properties from Spring's ConfigurableEnvironment
         // Iterate through all property sources known to Spring (application.*, jda4spring.* etc.)
         environment.getPropertySources().forEach(ps -> {
-            // Check if the property source is enumerable (i.e., we can get its property names)
             if (ps instanceof EnumerablePropertySource<?> eps) {
                 for (String key : eps.getPropertyNames()) {
                     if (key.startsWith("bots.")) {
-                        // Get value from environment to ensure proper resolution (e.g., placeholders)
-                        String value = environment.getProperty(key);
-                        if (value != null) { // Include empty values; they might indicate an intention to clear
-                            consolidatedRawProperties.put(key, value.trim());
-                            // Extract bot name from "bots.NAME.type"
-                            String[] parts = key.split("\\.");
-                            if (parts.length >= 3) {
-                                discoveredBotNames.add(parts[1]);
-                            }
-                        }
+                        // read back via the environment so placeholders get resolved
+                        put(configs, key, environment.getProperty(key));
                     }
                 }
             }
@@ -165,36 +149,35 @@ public class JDA4SpringMain {
 
         // 2. Load and override/supplement with properties from the external config file if specified
         if (externalConfigFilePath != null && !externalConfigFilePath.isBlank()) {
-            loadExternalConfig(externalConfigFilePath.trim(), consolidatedRawProperties, discoveredBotNames);
+            loadExternalConfig(externalConfigFilePath.trim(), configs);
         }
 
-        // 3. Convert consolidated raw properties into BotConfigDataMapper objects
-        List<BotConfigProperty> result = getBotConfigProperties(discoveredBotNames, consolidatedRawProperties);
-
-        if (result.isEmpty()) {
+        if (configs.isEmpty()) {
             logger.warn("No bot configurations found. Please ensure your 'bots.*' properties are correctly defined in application.properties, jda4spring.properties/yml/yaml, or your specified jda4spring.configfile.");
         }
-        return result;
+        return configs;
     }
 
-    @NotNull
-    private static List<BotConfigProperty> getBotConfigProperties(Set<String> discoveredBotNames, Map<String, String> consolidatedRawProperties) {
-        List<BotConfigProperty> result = new ArrayList<>();
-        for (String botName : discoveredBotNames) {
-            // Collect all properties for this specific bot from the consolidated map
-            for (Map.Entry<String, String> entry : consolidatedRawProperties.entrySet()) {
-                String key = entry.getKey();
-                if (key.startsWith("bots." + botName + ".")) {
-                    String type = key.substring(("bots." + botName + ".").length());
-                    String value = entry.getValue();
-                    result.add(new BotConfigProperty(botName, type, value));
-                }
-            }
+    /**
+     * Records a single {@code bots.NAME.TYPE = value} property. Anything else is ignored.
+     *
+     * @param configs the map to populate
+     * @param key     the raw property key
+     * @param value   the raw property value
+     */
+    private static void put(Map<String, Map<String, String>> configs, String key, String value) {
+        if (value == null || !key.startsWith("bots.")) {
+            return;
         }
-        return result;
+        // limit 3 so a type may itself contain dots, e.g. "activity.listening"
+        String[] parts = key.split("\\.", 3);
+        if (parts.length < 3) {
+            return;
+        }
+        configs.computeIfAbsent(parts[1], k -> new LinkedHashMap<>()).put(parts[2], value.trim());
     }
 
-    private void loadExternalConfig(String path, Map<String, String> targetMap, Set<String> botNames) {
+    private void loadExternalConfig(String path, Map<String, Map<String, String>> configs) {
         Resource resource = path.startsWith("classpath:")
                 ? new ClassPathResource(path.substring("classpath:".length()))
                 : new FileSystemResource(path);
@@ -205,12 +188,22 @@ public class JDA4SpringMain {
         }
 
         try {
+            Properties props;
             if (path.endsWith(".yml") || path.endsWith(".yaml")) {
-                parseYamlResource(resource, targetMap, botNames);
+                YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
+                yaml.setResources(resource);
+                props = yaml.getObject();
             } else {
+                props = new Properties();
                 try (InputStream is = resource.getInputStream()) {
-                    parsePropertiesFromInputStream(is, targetMap, botNames);
+                    props.load(is);
                 }
+            }
+            if (props == null) {
+                return;
+            }
+            for (String key : props.stringPropertyNames()) {
+                put(configs, key, environment.resolvePlaceholders(props.getProperty(key)));
             }
         } catch (IOException e) {
             logger.error("Error reading external config file: '{}'", path, e);
@@ -218,69 +211,15 @@ public class JDA4SpringMain {
         }
     }
 
-    private void parseYamlResource(Resource resource, Map<String, String> targetMap, Set<String> botNames) {
-        YamlPropertiesFactoryBean yaml = new YamlPropertiesFactoryBean();
-        yaml.setResources(resource);
-        Properties props = yaml.getObject();
-        if (props == null) return;
-        for (String key : props.stringPropertyNames()) {
-            if (key.startsWith("bots.")) {
-                String value = props.getProperty(key);
-                if (value != null) {
-                    targetMap.put(key, environment.resolvePlaceholders(value).trim());
-                    String[] parts = key.split("\\.");
-                    if (parts.length >= 3) botNames.add(parts[1]);
-                }
-            }
-        }
-    }
-
     /**
-     * Parses key-value pairs from an {@link InputStream} into a target map.
-     * Handles simple "key = value" format, line by line.
+     * Resolves the {@link BotTask} beans a bot should listen with.
      *
-     * @param is The {@link InputStream} to read from.
-     * @param targetMap The map to populate.
-     * @param botNames A set to collect discovered bot names.
+     * @param config the configuration of a single bot.
+     * @return the bot's task beans, or an empty list if none are configured.
      */
-    private void parsePropertiesFromInputStream(InputStream is, Map<String, String> targetMap, Set<String> botNames) {
-        try (Scanner scanner = new Scanner(is, StandardCharsets.UTF_8)) { // Specify encoding
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty() || line.startsWith("#")) { // Ignore comments and empty lines
-                    continue;
-                }
-                int eqIndex = line.indexOf('=');
-                if (eqIndex > 0) { // Check for a valid key-value pair
-                    String key = line.substring(0, eqIndex).trim();
-                    String value = line.substring(eqIndex + 1).trim();
-                    targetMap.put(key, environment.resolvePlaceholders(value));
-
-                    if (key.startsWith("bots.")) {
-                        String[] parts = key.split("\\.");
-                        if (parts.length >= 3) { // Ensure it's like bots.NAME.TYPE
-                            botNames.add(parts[1]);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Retrieves event listeners for a specific bot as a list of {@link BotTask} beans.
-     *
-     * @param allEntriesForCurrentBotAccount A list of {@link BotConfigProperty} entries for the current bot.
-     * @return A list of {@link Object} instances representing the bot's tasks.
-     */
-    private List<Object> getEventListenersForBotAsBotTasks(List<BotConfigProperty> allEntriesForCurrentBotAccount) {
+    private List<Object> getBotTasks(Map<String, String> config) {
         try {
-            String tasksString = allEntriesForCurrentBotAccount.stream()
-                    .filter(t -> "tasks".equals(t.type()))
-                    .findFirst()
-                    .map(BotConfigProperty::value)
-                    .orElse("");
-
+            String tasksString = config.getOrDefault("tasks", "");
             if (tasksString.trim().isEmpty()) {
                 logger.warn("No tasks defined for bot. Make sure to specify 'bots.<botName>.tasks = TaskBeanName1,TaskBeanName2' in your config.");
                 return new ArrayList<>();
@@ -299,40 +238,40 @@ public class JDA4SpringMain {
     /**
      * Retrieves the {@link Activity} for a specific bot from its configuration.
      *
-     * @param allEntriesForCurrentBotAccount A list of {@link BotConfigProperty} entries for the current bot.
+     * @param botName the name of the bot, for logging.
+     * @param config  the configuration of a single bot.
      * @return The configured {@link Activity}, or {@code null} if not specified.
      */
-    private Activity getActivity(List<BotConfigProperty> allEntriesForCurrentBotAccount) {
+    private Activity getActivity(String botName, Map<String, String> config) {
+        Map.Entry<String, String> activityConfig = config.entrySet().stream()
+                .filter(e -> e.getKey().startsWith("activity")) // Matches activity, activity.playing, activityPlaying etc.
+                .findFirst()
+                .orElse(null);
+
+        if (activityConfig == null || activityConfig.getValue().trim().isEmpty()) {
+            logger.info("No activity set for bot: {}", botName);
+            return null;
+        }
+
+        String value = activityConfig.getValue();
+        // "activity", "activity.listening" and "activityListening" all reduce to their suffix
+        String type = activityConfig.getKey().toLowerCase().replaceFirst("^activity[._]?", "");
+
         try {
-            BotConfigProperty activityConfig = allEntriesForCurrentBotAccount.stream()
-                    .filter(t -> t.type().startsWith("activity")) // Matches activity, activityPlaying etc.
-                    .findFirst()
-                    .orElse(null);
-
-            if (activityConfig == null || activityConfig.value().trim().isEmpty()) {
-                logger.info("No activity set for bot: {}", allEntriesForCurrentBotAccount.get(0).name());
-                return null;
-            }
-
-            String activityType = activityConfig.type();
-            String activityValue = activityConfig.value();
-
-            if (activityType.endsWith("playing")) {
-                return Activity.playing(activityValue);
-            } else if (activityType.endsWith("listening")) {
-                return Activity.listening(activityValue);
-            } else if (activityType.endsWith("watching")) {
-                return Activity.watching(activityValue);
-            } else if (activityType.endsWith("competing")) {
-                return Activity.competing(activityValue);
-            } else if (activityType.endsWith("activity")) { // Default activity type if suffix is just "activity"
-                return Activity.customStatus(activityValue);
-            } else {
-                logger.warn("Unknown activity type '{}' for bot '{}'. Using custom status.", activityType, activityConfig.name());
-                return Activity.customStatus(activityValue);
-            }
+            return switch (type) {
+                case "playing" -> Activity.playing(value);
+                case "listening" -> Activity.listening(value);
+                case "watching" -> Activity.watching(value);
+                case "competing" -> Activity.competing(value);
+                case "" -> Activity.customStatus(value);
+                default -> {
+                    logger.warn("Unknown activity type '{}' for bot '{}'. Using custom status.", activityConfig.getKey(), botName);
+                    yield Activity.customStatus(value);
+                }
+            };
         } catch (Exception e) {
-            logger.warn("Error getting activity for bot: {}", e.getMessage());
+            // Discord and JDA rejects e.g. names over 128 chars — warn and start the bot without an activity
+            logger.warn("Error getting activity for bot {}: {}", botName, e.getMessage());
             return null;
         }
     }
@@ -340,33 +279,26 @@ public class JDA4SpringMain {
     /**
      * Retrieves the list of {@link GatewayIntent}s for a specific bot from its configuration.
      *
-     * @param allEntriesForCurrentBotAccount A list of {@link BotConfigProperty} entries for the current bot.
+     * @param config the configuration of a single bot.
      * @return A list of configured {@link GatewayIntent}s, or default intents if not specified or invalid.
      */
-    private List<GatewayIntent> getGatewayIntents(List<BotConfigProperty> allEntriesForCurrentBotAccount) {
+    private List<GatewayIntent> getGatewayIntents(Map<String, String> config) {
+        String gatewayIntentsString = config.getOrDefault("intents", "");
+
+        if (gatewayIntentsString.trim().isEmpty()) {
+            logger.info("No Gateway Intents defined for bot. Using default intents.");
+            return new ArrayList<>(GatewayIntent.DEFAULT);
+        }
+
         try {
-            String gatewayIntentsString = allEntriesForCurrentBotAccount.stream()
-                    .filter(t -> "intents".equals(t.type()))
-                    .findFirst()
-                    .map(BotConfigProperty::value)
-                    .orElse("");
-
-            if (gatewayIntentsString.trim().isEmpty()) {
-                logger.info("No Gateway Intents defined for bot. Using default intents.");
-                return new ArrayList<>(GatewayIntent.DEFAULT);
-            }
-
             return Stream.of(gatewayIntentsString.split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
                     .map(s -> s.toUpperCase().replace("GATEWAYINTENT.", "")) // Normalize input
                     .map(GatewayIntent::valueOf)
                     .toList();
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid Gateway Intent specified: {}. Using default intents.", e.getMessage());
-            return new ArrayList<>(GatewayIntent.DEFAULT);
         } catch (Exception e) {
-            logger.error("Error getting gateway intents: {}", e.getMessage());
+            logger.error("Invalid Gateway Intent specified: {}. Using default intents.", e.getMessage());
             return new ArrayList<>(GatewayIntent.DEFAULT);
         }
     }
@@ -376,7 +308,7 @@ public class JDA4SpringMain {
      * This allows other parts of the application to get the JDA instance related to their tasks.
      *
      * @param clazz The class of the event listener (BotTask) for which JDA instances are requested.
-     * @return A list of {@link JDA} instances that are configured to use the given listener class, or {@code null} if none found.
+     * @return A list of {@link JDA} instances that are configured to use the given listener class, empty if none found.
      */
     public List<JDA> getJDAInstances(Class<?> clazz) {
         List<JDA> foundInstances = new ArrayList<>();
