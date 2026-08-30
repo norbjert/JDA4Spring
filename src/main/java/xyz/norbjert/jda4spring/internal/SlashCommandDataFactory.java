@@ -16,12 +16,7 @@ public class SlashCommandDataFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(SlashCommandDataFactory.class);
 
-    /**
-     * static class, don't instantiate it pls thank you
-     */
-    private SlashCommandDataFactory(){
-        logger.error("static class, not to be instanced");
-        throw new RuntimeException("SlashCommandDataFactory is a static class and cannot be instanced");
+    private SlashCommandDataFactory() {
     }
 
     /**
@@ -31,41 +26,43 @@ public class SlashCommandDataFactory {
      */
     public static SlashCommandData createSlashCommand(Method slashMethod) {
 
+        SlashCommand annotation = slashMethod.getAnnotation(SlashCommand.class);
+
         SlashCommandData d = Commands.slash(
-                getSlashCommandName(slashMethod),
-                getSlashCommandDescription(slashMethod));
-        for (SlashCommandArg arg : slashMethod.getAnnotation(SlashCommand.class).options()) {
+                getSlashCommandName(slashMethod, annotation),
+                getSlashCommandDescription(annotation));
+        for (SlashCommandArg arg : annotation.options()) {
             d.addOption(arg.optionType(), arg.name(), arg.description());
         }
         return d;
     }
 
-    private static String getSlashCommandName(Method slashMethod) {
+    private static String getSlashCommandName(Method slashMethod, SlashCommand annotation) {
 
-        //checks if the slash command has capital letters in it (which discord does not allow to be used for slash commands)
-        if (!slashMethod.getAnnotation(SlashCommand.class).command().toLowerCase().equals(slashMethod.getAnnotation(SlashCommand.class).command())) {
-            logger.info("Discord does not allow for upper case letters in slash commands, please change {} to lower case",
-                    slashMethod.getAnnotation(SlashCommand.class).command());
-        }
+        String command = annotation.command();
 
-        //replaces the default name implementation with method name
-        if (slashMethod.getAnnotation(SlashCommand.class).command().equals("<using method name>")) {
-            logger.debug("no name for slash command with method name\"{}\", using method name instead",
-                    slashMethod.getName());
+        //falls back to the method name if no command="xyz" has been set
+        if (command.equals(SlashCommand.USING_METHOD_NAME) || command.isEmpty()) {
+            logger.debug("no name for slash command with method name \"{}\", using method name instead", slashMethod.getName());
             return slashMethod.getName().toLowerCase();
         }
-        return slashMethod.getAnnotation(SlashCommand.class).command().toLowerCase();
+
+        //checks if the slash command has capital letters in it (which discord does not allow to be used for slash commands)
+        if (!command.toLowerCase().equals(command)) {
+            logger.info("Discord does not allow for upper case letters in slash commands, please change {} to lower case", command);
+        }
+        return command.toLowerCase();
     }
 
-    private static String getSlashCommandDescription(Method slashMethod) {
+    private static String getSlashCommandDescription(SlashCommand annotation) {
 
         //discord limits descriptions to 100 characters max
-        if (slashMethod.getAnnotation(SlashCommand.class).description().length() > 100) {
+        if (annotation.description().length() > 100) {
             logger.info("Discord does not allow for descriptions longer than 100 characters, please change the description of {} to be shorter",
-                    slashMethod.getAnnotation(SlashCommand.class).command());
-            return slashMethod.getAnnotation(SlashCommand.class).description().subSequence(0, 100).toString();
+                    annotation.command());
+            return annotation.description().substring(0, 100);
         }
-        return slashMethod.getAnnotation(SlashCommand.class).description();
+        return annotation.description();
     }
 
 }

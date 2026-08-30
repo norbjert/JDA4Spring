@@ -1,6 +1,5 @@
 package xyz.norbjert.jda4spring.internal;
 
-import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -21,7 +20,6 @@ import xyz.norbjert.jda4spring.annotations.SlashCommand;
 import javax.security.auth.login.LoginException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Objects;
 
 import static xyz.norbjert.jda4spring.internal.OnChatMessageFilterProcessor.matchesAllFilters;
 import static xyz.norbjert.jda4spring.internal.invokers.ButtonInteractionInvoker.invokeButtonInteractionMethod;
@@ -38,9 +36,7 @@ import static xyz.norbjert.jda4spring.internal.invokers.SlashCommandInteractionI
 public class DiscordBot extends ListenerAdapter {
 
     private final Logger logger = LoggerFactory.getLogger(DiscordBot.class);
-    @Getter
     private final List<Object> botTasks;
-    @Getter
     private final JDA jda;
     private final List<Method> slashCommandMethods;
     private final List<Method> chatInteractionMethods;
@@ -66,9 +62,9 @@ public class DiscordBot extends ListenerAdapter {
                 .awaitReady();
 
         this.botTasks = botTasks;
-        this.chatInteractionMethods = AnnotationProcessor.findChatMsgAnnotations(botTasks);
-        this.slashCommandMethods = AnnotationProcessor.findSlashCommands(botTasks);
-        this.buttonInteractionMethods = AnnotationProcessor.findButtonAnnotations(botTasks);
+        this.chatInteractionMethods = AnnotationProcessor.find(botTasks, OnChatMessage.class);
+        this.slashCommandMethods = AnnotationProcessor.find(botTasks, SlashCommand.class);
+        this.buttonInteractionMethods = AnnotationProcessor.find(botTasks, Button.class, ButtonHandler.class);
 
         //publishes the slash commands to discord, so they show up in the preview for when you start typing /xyz
         jda.updateCommands().addCommands(slashCommandMethods.stream().map(SlashCommandDataFactory::createSlashCommand).toList()).queue();
@@ -166,16 +162,25 @@ public class DiscordBot extends ListenerAdapter {
      */
     //todo: consider configuring the logging via log levels
     private void logSlashCommandInteractions(SlashCommandInteractionEvent event){
-        if (event.getGuild() == null) {
-            logger.info("Received: /{} {} in channel: {} via direct message from user: {}", event.getName(),
-                    event.getOptions().stream().map(OptionMapping::getAsString).toList(),
-                    event.getChannel().getName(), event.getUser().getName());
-        } else {
-            logger.info("Received: /{} {} in channel: {} on server: {} from user: {}", event.getName(),
-                    event.getOptions().stream().map(OptionMapping::getAsString).toList(),
-                    event.getChannel().getName(), Objects.requireNonNull(event.getGuild()).getName(),
-                    event.getUser().getName());
-        }
+        logger.info("Received: /{} {} in channel: {} on server: {} from user: {}", event.getName(),
+                event.getOptions().stream().map(OptionMapping::getAsString).toList(),
+                event.getChannel().getName(),
+                event.getGuild() == null ? "<direct message>" : event.getGuild().getName(),
+                event.getUser().getName());
+    }
+
+    /**
+     * @return the bot tasks this bot dispatches events to
+     */
+    public List<Object> getBotTasks() {
+        return botTasks;
+    }
+
+    /**
+     * @return the JDA instance backing this bot account
+     */
+    public JDA getJda() {
+        return jda;
     }
 
     /**

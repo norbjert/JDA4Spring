@@ -53,54 +53,54 @@ class AnnotationProcessorTest {
 
     @Test
     void findSlashCommands_returnsAnnotatedMethod() {
-        List<Method> methods = AnnotationProcessor.findSlashCommands(List.of(new TaskWithSlashCommand()));
+        List<Method> methods = AnnotationProcessor.find(List.of(new TaskWithSlashCommand()), SlashCommand.class);
         assertEquals(1, methods.size());
         assertEquals("ping", methods.get(0).getName());
     }
 
     @Test
     void findSlashCommands_ignoresUnannotatedMethods() {
-        List<Method> methods = AnnotationProcessor.findSlashCommands(List.of(new TaskWithNoAnnotations()));
+        List<Method> methods = AnnotationProcessor.find(List.of(new TaskWithNoAnnotations()), SlashCommand.class);
         assertTrue(methods.isEmpty());
     }
 
     @Test
     void findSlashCommands_scansMultipleBotTasks() {
-        List<Method> methods = AnnotationProcessor.findSlashCommands(
-                List.of(new TaskWithSlashCommand(), new TaskWithSlashCommand()));
+        List<Method> methods = AnnotationProcessor.find(
+                List.of(new TaskWithSlashCommand(), new TaskWithSlashCommand()), SlashCommand.class);
         assertEquals(2, methods.size());
     }
 
     @Test
     void findChatMsgAnnotations_returnsAnnotatedMethod() {
-        List<Method> methods = AnnotationProcessor.findChatMsgAnnotations(List.of(new TaskWithChatMessage()));
+        List<Method> methods = AnnotationProcessor.find(List.of(new TaskWithChatMessage()), OnChatMessage.class);
         assertEquals(1, methods.size());
         assertEquals("onHello", methods.get(0).getName());
     }
 
     @Test
     void findChatMsgAnnotations_ignoresUnannotatedMethods() {
-        List<Method> methods = AnnotationProcessor.findChatMsgAnnotations(List.of(new TaskWithNoAnnotations()));
+        List<Method> methods = AnnotationProcessor.find(List.of(new TaskWithNoAnnotations()), OnChatMessage.class);
         assertTrue(methods.isEmpty());
     }
 
     @Test
     void findButtonAnnotations_returnsButtonAnnotatedMethod() {
-        List<Method> methods = AnnotationProcessor.findButtonAnnotations(List.of(new TaskWithButton()));
+        List<Method> methods = AnnotationProcessor.find(List.of(new TaskWithButton()), Button.class, ButtonHandler.class);
         assertEquals(1, methods.size());
         assertNotNull(methods.get(0).getAnnotation(Button.class));
     }
 
     @Test
     void findButtonAnnotations_returnsButtonHandlerAnnotatedMethod() {
-        List<Method> methods = AnnotationProcessor.findButtonAnnotations(List.of(new TaskWithButtonHandler()));
+        List<Method> methods = AnnotationProcessor.find(List.of(new TaskWithButtonHandler()), Button.class, ButtonHandler.class);
         assertEquals(1, methods.size());
         assertNotNull(methods.get(0).getAnnotation(ButtonHandler.class));
     }
 
     @Test
     void findButtonAnnotations_returnsBothButtonAndButtonHandler() {
-        List<Method> methods = AnnotationProcessor.findButtonAnnotations(List.of(new TaskWithBothButtonTypes()));
+        List<Method> methods = AnnotationProcessor.find(List.of(new TaskWithBothButtonTypes()), Button.class, ButtonHandler.class);
         assertEquals(2, methods.size());
     }
 }
